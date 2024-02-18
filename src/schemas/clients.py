@@ -1,6 +1,6 @@
 from typing import Optional
 
-from pydantic import *
+from pydantic import BaseModel, Field, ConfigDict
 
 from src.schemas.oauth2 import GrantTypes, ResponseTypes
 
@@ -16,13 +16,9 @@ class CreateOauth2Client(BaseModel):
     """List of contacts of the client"""
     redirect_uris: list[str] = Field(default_factory=list)
     """List of allowed redirect URIs"""
-    grant_types: list[GrantTypes] = Field(
-        default_factory=lambda: [GrantTypes.authorization_code]
-    )
+    grant_types: list[GrantTypes] = Field(default_factory=lambda: [GrantTypes.authorization_code])
     """List of allowed grant types"""
-    response_types: list[ResponseTypes] = Field(
-        default_factory=lambda: [ResponseTypes.code]
-    )
+    response_types: list[ResponseTypes] = Field(default_factory=lambda: [ResponseTypes.code])
     """List of allowed response types"""
     allowed_scopes: list[str] = Field(default_factory=list)
     """List of allowed scopes"""
@@ -48,9 +44,7 @@ class ViewOauth2Client(BaseModel):
     default_scopes: list[str]
     token_endpoint_auth_method: str
 
-    model_config = ConfigDict(
-        from_attributes=True,
-    )
+    model_config = ConfigDict(from_attributes=True)
 
 
 # sql.models.clients.Oauth2Client

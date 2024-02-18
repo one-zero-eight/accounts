@@ -1,0 +1,32 @@
+# Check settings.schema.yaml for more details
+$schema: "./settings.schema.yaml"
+# ---------- Application settings ----- #
+auth:
+  # Run 'openssl rand -hex 32' to generate key
+  session_secret_key: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+  # Run 'openssl genrsa -out private.pem 2048' to generate keys
+  jwt_private_key: |
+    -----BEGIN RSA PRIVATE KEY-----
+    ssssssssssssssssssssssssssssss
+    ssssssssssssssssssssssssssssss
+    ssssssssssssssssssssssssssssss
+    ssssssssssssssssssssssssssssss
+    -----END RSA PRIVATE KEY-----
+  # For existing key run 'openssl rsa -in private.pem -pubout -out public.pem'
+  jwt_public_key: |
+    -----BEGIN PUBLIC KEY-----
+    ssssssssssssssssssssssssssssss
+    ssssssssssssssssssssssssssssss
+    sssssssssss
+    -----END PUBLIC KEY-----
+mongo:
+  uri: mongodb://user:password@localhost:27017/db?authSource=admin
+telegram:
+  bot_token: <bot_token>
+  bot_username: <bot_username>
+innopolis_sso:
+  client_id: <client_id>
+  client_secret: <client_secret>
+  redirect_uri: <callback_url>
+  resource_id: null
+web_url: http://127.0.0.1

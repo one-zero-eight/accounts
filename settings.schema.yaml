@@ -1,0 +1,170 @@
+$schema: https://json-schema.org/draft-07/schema#
+$defs:
+  Authentication:
+    additionalProperties: false
+    properties:
+      allowed_domains:
+        default:
+        - localhost
+        - 127.0.0.1
+        items:
+          type: string
+        title: Allowed Domains
+        type: array
+      jwt_private_key:
+        format: password
+        title: Jwt Private Key
+        type: string
+        writeOnly: true
+      jwt_public_key:
+        title: Jwt Public Key
+        type: string
+      session_secret_key:
+        format: password
+        title: Session Secret Key
+        type: string
+        writeOnly: true
+    required:
+    - jwt_private_key
+    - jwt_public_key
+    - session_secret_key
+    title: Authentication
+    type: object
+  Environment:
+    enum:
+    - development
+    - production
+    - testing
+    title: Environment
+    type: string
+  InnopolisSSO:
+    additionalProperties: false
+    description: Innopolis SSO settings (only for production)
+    properties:
+      client_id:
+        title: Client Id
+        type: string
+      client_secret:
+        format: password
+        title: Client Secret
+        type: string
+        writeOnly: true
+      redirect_uri:
+        title: Redirect Uri
+        type: string
+      resource_id:
+        anyOf:
+        - type: string
+        - type: 'null'
+        default: null
+        title: Resource Id
+    required:
+    - client_id
+    - client_secret
+    - redirect_uri
+    title: InnopolisSSO
+    type: object
+  Mongo:
+    additionalProperties: false
+    properties:
+      uri:
+        format: password
+        title: Uri
+        type: string
+        writeOnly: true
+    required:
+    - uri
+    title: Mongo
+    type: object
+  SMTP:
+    additionalProperties: false
+    properties:
+      host:
+        title: Host
+        type: string
+      port:
+        default: 587
+        title: Port
+        type: integer
+      username:
+        title: Username
+        type: string
+      password:
+        format: password
+        title: Password
+        type: string
+        writeOnly: true
+    required:
+    - host
+    - username
+    - password
+    title: SMTP
+    type: object
+  Telegram:
+    additionalProperties: false
+    properties:
+      bot_username:
+        title: Bot Username
+        type: string
+      bot_token:
+        format: password
+        title: Bot Token
+        type: string
+        writeOnly: true
+    required:
+    - bot_username
+    - bot_token
+    title: Telegram
+    type: object
+additionalProperties: false
+description: Settings for the application. Get settings from `settings.yaml` file.
+properties:
+  app_root_path:
+    default: ''
+    title: App Root Path
+    type: string
+  environment:
+    allOf:
+    - $ref: '#/$defs/Environment'
+    default: development
+  mongo:
+    $ref: '#/$defs/Mongo'
+  web_url:
+    title: Web Url
+    type: string
+  cors_allow_origins:
+    default:
+    - https://innohassle.ru
+    - https://pre.innohassle.ru
+    - http://localhost:3000
+    items:
+      type: string
+    title: Cors Allow Origins
+    type: array
+  auth:
+    $ref: '#/$defs/Authentication'
+  innopolis_sso:
+    anyOf:
+    - $ref: '#/$defs/InnopolisSSO'
+    - type: 'null'
+    default: null
+  telegram:
+    anyOf:
+    - $ref: '#/$defs/Telegram'
+    - type: 'null'
+    default: null
+  smtp:
+    anyOf:
+    - $ref: '#/$defs/SMTP'
+    - type: 'null'
+    default: null
+  $schema:
+    description: Path to the schema file
+    title: Schema
+    type: string
+required:
+- mongo
+- web_url
+- auth
+title: Settings
+type: object
