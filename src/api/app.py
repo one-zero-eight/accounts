@@ -5,6 +5,7 @@ from fastapi.responses import RedirectResponse
 from starlette.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 
+import src.logging  # noqa F401
 from src.api import docs
 from src.api.lifespan import lifespan
 from src.api.routers import routers

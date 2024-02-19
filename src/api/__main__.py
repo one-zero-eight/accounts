@@ -15,6 +15,7 @@ uvicorn.main.main(
         "--use-colors",
         "--proxy-headers",
         "--forwarded-allow-ips=*",
+        "--log-config=logging.yaml",
         *args,
     ]
 )
