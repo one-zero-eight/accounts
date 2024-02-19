@@ -120,7 +120,6 @@ async def authorize(schema: Annotated[AuthorizeMethodSchema, Depends()]):
             raise ValueError("Scope not allowed for the client")
 
 
-
 class GenerateTokenResponse(BaseModel):
     access_token: str
     token_type: str = "Bearer"
