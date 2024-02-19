@@ -1,18 +1,19 @@
-__all__ = ["VerifiedClientIdDep", "security"]
+__all__ = ["VerifiedClientIdDep", "basic", "ClientRegistrationAccessTokenDep", "bearer"]
 
 from typing import Annotated
 
 from fastapi import Depends
-from fastapi.security import HTTPBasic, HTTPBasicCredentials
+from fastapi.security import HTTPBasic, HTTPBasicCredentials, HTTPBearer, HTTPAuthorizationCredentials
 
 from src.api.dependencies import Shared
 from src.exceptions import ClientIncorrectCredentialsException
-from src.modules.clients.repository import ClientRepository, VerificationResultStatus
+from src.modules.clients.repository import ClientRepository
+from src.modules.clients.schemas import VerificationResultStatus
 
-security = HTTPBasic(auto_error=False)
+basic = HTTPBasic(auto_error=False)
 
 
-async def _get_client_id(credentials: Annotated[HTTPBasicCredentials | None, Depends(security)]) -> str:
+async def _get_client_id(credentials: Annotated[HTTPBasicCredentials | None, Depends(basic)]) -> str:
     if credentials is None:
         raise ClientIncorrectCredentialsException(no_credentials=True)
 
@@ -24,4 +25,16 @@ async def _get_client_id(credentials: Annotated[HTTPBasicCredentials | None, Dep
         raise ClientIncorrectCredentialsException()
 
 
+bearer = HTTPBearer(auto_error=False)
+
+
+async def _get_client_registration_access_token(
+    credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(bearer)],
+) -> str | None:
+    if credentials is None or not credentials.credentials.startswith("reg"):
+        return None
+    return credentials.credentials
+
+
 VerifiedClientIdDep = Annotated[str, Depends(_get_client_id)]
+ClientRegistrationAccessTokenDep = Annotated[str | None, Depends(_get_client_registration_access_token)]

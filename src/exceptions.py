@@ -44,7 +44,7 @@ class ClientIncorrectCredentialsException(HTTPException):
             super().__init__(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="No credentials provided",
-                headers={"WWW-Authenticate": "Basic"},
+                headers={"WWW-Authenticate": "Bearer"},
             )
         else:
             super().__init__(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate credentials")

@@ -1,6 +1,7 @@
-__all__ = ["router"]
+__all__ = ["router", "oauth"]
 
-from authlib.integrations.base_client import MismatchingStateError
+from authlib.integrations.base_client import OAuthError
+from authlib.integrations.starlette_client import OAuth
 from fastapi import APIRouter
 from starlette.datastructures import URL
 from starlette.requests import Request
@@ -9,22 +10,22 @@ from starlette.responses import RedirectResponse, JSONResponse
 from src.api.dependencies import Shared
 from src.config import settings
 from src.exceptions import InvalidReturnToURL
-from src.modules.users.repository import UserRepository
+from src.logging_ import logger
 from src.modules.providers.innopolis.schemas import UserInfoFromSSO
+from src.modules.users.repository import UserRepository
 
 router = APIRouter(prefix="/innopolis", tags=["Innopolis SSO"])
 
 if settings.innopolis_sso:
-    from authlib.integrations.starlette_client import OAuth
-
     oauth = OAuth()
+
     innopolis_sso = oauth.register(
         "innopolis",
         client_id=settings.innopolis_sso.client_id,
         client_secret=settings.innopolis_sso.client_secret.get_secret_value(),
         # OAuth client will fetch configuration on first request
         server_metadata_url="https://sso.university.innopolis.ru/adfs/.well-known/openid-configuration",
-        client_kwargs={"scope": "openid", "resource": settings.innopolis_sso.resource_id},
+        client_kwargs={"scope": "openid offline_access", "resource": settings.innopolis_sso.resource_id},
     )
 
     # Add type hinting
@@ -46,12 +47,13 @@ if settings.innopolis_sso:
             return JSONResponse(status_code=403, content={"error": error, "description": description})
         try:
             token = await oauth.innopolis.authorize_access_token(request)
-        except MismatchingStateError:
+        except OAuthError:
             # Session is different on 'login' and 'callback'
             return await recover_mismatching_state(request)
 
         user_info_dict: dict = token["userinfo"]
-
+        logger.debug(f"User info from SSO: {user_info_dict}")
+        logger.debug(f"Token from SSO: {token}")
         user_info = UserInfoFromSSO.from_token_and_userinfo(token, user_info_dict)
         user = await Shared.f(UserRepository).register_or_update_via_innopolis_sso(user_info)
         redirect_uri = request.session.pop("redirect_uri")

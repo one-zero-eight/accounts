@@ -2,31 +2,34 @@ import secrets
 from enum import StrEnum
 
 from motor.motor_asyncio import AsyncIOMotorDatabase
-from pydantic import BaseModel, SecretStr, Field, HttpUrl
+from pydantic import BaseModel, SecretStr, Field
+from pymongo import ReturnDocument
 
+from src.modules.clients.schemas import VerificationResultStatus, ClientVerificationResult, ClientUpdate
 from src.mongo_object_id import PyObjectId
 
 
+class ClientType(StrEnum):
+    public = "public"
+    confidential = "confidential"
+
+
 class Client(BaseModel):
+    object_id: PyObjectId = Field(alias="_id")
     client_id: str
-    client_secret: str
+    client_secret: str | None = None
+    client_type: ClientType = ClientType.confidential
+    registration_access_token: str
     owner_id: PyObjectId | None = None
-    allowed_redirect_uris: list[HttpUrl] = Field(default_factory=list)
-
-
-class VerificationResultStatus(StrEnum):
-    SUCCESS = "success"
-    INCORRECT = "incorrect"
-    NOT_FOUND = "not_found"
-
-
-class ClientVerificationResult(BaseModel):
-    status: VerificationResultStatus
-    client_id: str | None = None
+    allowed_redirect_uris: list[str] = Field(default_factory=list)
 
 
 def _generate_random_secret() -> SecretStr:
     return SecretStr(secrets.token_urlsafe(32))
+
+
+def _generate_random_registration_access_token() -> str:
+    return f"reg_{secrets.token_urlsafe(32)}.{secrets.token_urlsafe(6)}"
 
 
 class ClientRepository:
@@ -48,9 +51,14 @@ class ClientRepository:
 
         client_id = await _generate_random_id()
         client_secret = _generate_random_secret()
+        registration_access_token = _generate_random_registration_access_token()
 
         insert_result = await self.__collection.insert_one(
-            {"client_id": client_id, "client_secret": client_secret.get_secret_value()}
+            {
+                "client_id": client_id,
+                "client_secret": client_secret.get_secret_value(),
+                "registration_access_token": registration_access_token,
+            }
         )
         client = await self.__collection.find_one({"_id": insert_result.inserted_id})
         return Client.model_validate(client)
@@ -59,6 +67,14 @@ class ClientRepository:
         client_dict = await self.__collection.find_one({"client_id": client_id})
         if client_dict is not None:
             return Client.model_validate(client_dict)
+
+    async def update(self, client_id: str, client_update: ClientUpdate) -> Client:
+        client_dict = await self.__collection.find_one_and_update(
+            {"client_id": client_id},
+            {"$set": client_update.model_dump(exclude_unset=True, exclude_none=True)},
+            return_document=ReturnDocument.AFTER,
+        )
+        return Client.model_validate(client_dict)
 
     async def verify(self, client_id: str, client_secret: str) -> ClientVerificationResult:
         client_dict = await self.__collection.find_one({"client_id": client_id})

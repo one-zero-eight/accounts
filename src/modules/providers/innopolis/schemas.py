@@ -1,5 +1,7 @@
 __all__ = ["UserInfoFromSSO"]
 
+import datetime
+
 from pydantic import BaseModel, Field, field_validator
 
 
@@ -7,6 +9,7 @@ class UserInfoFromSSO(BaseModel):
     email: str
     access_token: str
     refresh_token: str
+    expires_at: datetime.datetime
 
     status: list[str] | None = Field(default_factory=list)
     name: str | None = None
@@ -27,4 +30,5 @@ class UserInfoFromSSO(BaseModel):
             email=userinfo["email"],
             name=userinfo.get("commonname"),
             status=userinfo.get("Status"),
+            expires_at=token["expires_at"],
         )

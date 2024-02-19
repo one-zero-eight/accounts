@@ -1,5 +1,6 @@
 __all__ = ["lifespan"]
 
+import asyncio
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -9,6 +10,7 @@ from src.api.dependencies import Shared
 from src.config import settings
 from src.modules.clients.repository import ClientRepository
 from src.modules.providers.email.repository import EmailFlowRepository
+from src.modules.providers.innopolis.refresher import TokenRefresher
 from src.modules.resources.repository import ResourceRepository
 from src.modules.smtp.repository import SMTPRepository
 from src.modules.users.repository import UserRepository
@@ -39,6 +41,13 @@ async def lifespan(_app: FastAPI):
     # Application startup
 
     await setup_repositories()
+
+    if settings.innopolis_sso:
+        from src.modules.providers.innopolis.routes import oauth
+
+        refresher = TokenRefresher(oauth.innopolis)
+        # noinspection PyAsyncCall
+        asyncio.create_task(refresher.run())
 
     yield
 
