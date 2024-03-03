@@ -4,9 +4,8 @@ from typing import Optional, Annotated
 from fastapi import Query, Form, APIRouter, Depends
 from pydantic import BaseModel, Field, RootModel
 
-from src.api.dependencies import Shared
-from src.modules.clients.repository import ClientRepository
-from src.modules.resources.repository import ResourceRepository
+from src.modules.clients.repository import client_repository
+from src.modules.resources.repository import resource_repository
 
 router = APIRouter(prefix="/oauth2", tags=["Oauth 2"])
 
@@ -15,7 +14,7 @@ class CodeChallenge(StrEnum):
     S256 = "S256"
 
     @classmethod
-    def enum(cls):
+    def enum(cls) -> list["CodeChallenge"]:
         return [cls.S256]
 
 
@@ -25,7 +24,7 @@ class ResponseType(StrEnum):
     ID_TOKEN = "id_token"
 
     @classmethod
-    def enum(cls):
+    def enum(cls) -> list["ResponseType"]:
         return [cls.CODE, cls.TOKEN, cls.ID_TOKEN]
 
 
@@ -40,7 +39,7 @@ class ResponseMode(StrEnum):
     # WEB_MESSAGE = "web_message"
 
     @classmethod
-    def enum(cls):
+    def enum(cls) -> list["ResponseMode"]:
         # return [cls.QUERY, cls.FRAGMENT, cls.FORM_POST, cls.WEB_MESSAGE]
         return [cls.FRAGMENT]
 
@@ -95,7 +94,6 @@ async def authorize(schema: Annotated[AuthorizeMethodSchema, Depends()]):
 
     is_authorization_code_flow = ResponseType.CODE in response_types
 
-    client_repository = Shared.f(ClientRepository)
     client = await client_repository.read(schema.client_id)
     # check if valid client
     if client is None:
@@ -104,7 +102,6 @@ async def authorize(schema: Annotated[AuthorizeMethodSchema, Depends()]):
     if schema.redirect_uri not in client.allowed_redirect_uris:
         raise ValueError("Redirect URI not allowed for the client")
 
-    resource_repository = Shared.f(ResourceRepository)
     resource = await resource_repository.read(schema.audience)
     # check if valid resource
     if resource is None:

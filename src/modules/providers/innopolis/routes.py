@@ -7,12 +7,11 @@ from starlette.datastructures import URL
 from starlette.requests import Request
 from starlette.responses import RedirectResponse, JSONResponse
 
-from src.api.dependencies import Shared
 from src.config import settings
 from src.exceptions import InvalidReturnToURL
 from src.logging_ import logger
 from src.modules.providers.innopolis.schemas import UserInfoFromSSO
-from src.modules.users.repository import UserRepository
+from src.modules.users.repository import user_repository
 
 router = APIRouter(prefix="/innopolis", tags=["Innopolis SSO"])
 
@@ -55,7 +54,7 @@ if settings.innopolis_sso:
         logger.debug(f"User info from SSO: {user_info_dict}")
         logger.debug(f"Token from SSO: {token}")
         user_info = UserInfoFromSSO.from_token_and_userinfo(token, user_info_dict)
-        user = await Shared.f(UserRepository).register_or_update_via_innopolis_sso(user_info)
+        user = await user_repository.register_or_update_via_innopolis_sso(user_info)
         redirect_uri = request.session.pop("redirect_uri")
         ensure_allowed_redirect_uri(redirect_uri)
         request.session.clear()  # Clear session cookie as it is used only during auth

@@ -2,7 +2,7 @@ from enum import StrEnum
 
 from pydantic import BaseModel, Field
 
-from src.mongo_object_id import PyObjectId
+from beanie import PydanticObjectId
 
 
 class VerificationResultStatus(StrEnum):
@@ -21,7 +21,7 @@ class ClientRead(BaseModel):
     client_secret: str
     registration_access_token: str | None = None
     registration_client_uri: str | None = None
-    owner_id: PyObjectId | None = None
+    owner_id: PydanticObjectId | None = None
     allowed_redirect_uris: list[str] = Field(default_factory=list)
 
 

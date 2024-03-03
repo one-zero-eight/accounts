@@ -1,10 +1,11 @@
-__all__ = ["SMTPRepository"]
+__all__ = ["SMTPRepository", "smtp_repository"]
 
 import contextlib
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from pathlib import Path
+from typing import Generator
 
 from email_validator import validate_email, EmailNotValidError
 
@@ -17,11 +18,11 @@ VERIFICATION_CODE_TEMPLATE = (Path(__file__).parent / "templates/verification-co
 class SMTPRepository:
     _server: smtplib.SMTP
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._server = smtplib.SMTP(settings.smtp.host, settings.smtp.port)
 
     @contextlib.contextmanager
-    def _context(self):
+    def _context(self) -> Generator[None, None, None]:
         self._server.connect(settings.smtp.host, settings.smtp.port)
         self._server.starttls()
         self._server.login(settings.smtp.username, settings.smtp.password.get_secret_value())
@@ -46,5 +47,13 @@ class SMTPRepository:
             to = valid.normalized
         except EmailNotValidError as e:
             raise ValueError(e)
-        with self._context():
+        with SMTPRepository._context(self):
             self._server.sendmail(settings.smtp.username, to, message)
+
+
+if settings.smtp:
+    smtp_repository = SMTPRepository()
+else:
+    import warnings
+
+    warnings.warn("SMTP settings are not configured, SMTPRepository will not be available", RuntimeWarning)

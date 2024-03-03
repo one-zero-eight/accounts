@@ -1,57 +1,45 @@
 __all__ = ["lifespan"]
 
-import asyncio
+import json
 from contextlib import asynccontextmanager
 
+from beanie import init_beanie
 from fastapi import FastAPI
-from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
+from motor.motor_asyncio import AsyncIOMotorClient
+from pymongo import timeout
+from pymongo.errors import ConnectionFailure
 
-from src.api.dependencies import Shared
 from src.config import settings
-from src.modules.clients.repository import ClientRepository
-from src.modules.providers.email.repository import EmailFlowRepository
-from src.modules.providers.innopolis.refresher import TokenRefresher
-from src.modules.resources.repository import ResourceRepository
-from src.modules.smtp.repository import SMTPRepository
-from src.modules.users.repository import UserRepository
+from src.logging_ import logger
+from src.storages.mongo.models import document_models
 
 
-async def setup_repositories():
-    mongo_client = AsyncIOMotorClient(settings.mongo.uri.get_secret_value())
-    Shared.register_provider(AsyncIOMotorClient, mongo_client)
-    mongo_db = mongo_client.get_default_database()
-    Shared.register_provider(AsyncIOMotorDatabase, mongo_db)
-    user_repository = UserRepository(mongo_db)
-    Shared.register_provider(UserRepository, user_repository)
-    email_flow_repository = EmailFlowRepository(mongo_db)
-    Shared.register_provider(EmailFlowRepository, email_flow_repository)
-    client_repository = ClientRepository(mongo_db)
-    await client_repository.__post_init__()
-    Shared.register_provider(ClientRepository, client_repository)
-    resource_repository = ResourceRepository(mongo_db)
-    await resource_repository.__post_init__()
-    Shared.register_provider(ResourceRepository, resource_repository)
-    if settings.smtp:
-        smtp_repository = SMTPRepository()
-        Shared.register_provider(SMTPRepository, smtp_repository)
+async def setup_repositories() -> AsyncIOMotorClient:
+    motor_client = AsyncIOMotorClient(
+        settings.mongo.uri.get_secret_value(), connectTimeoutMS=5000, serverSelectionTimeoutMS=5000
+    )
+
+    # healthcheck mongo
+    try:
+        with timeout(1):
+            server_info = await motor_client.server_info()
+            server_info_pretty_text = json.dumps(server_info, indent=2, default=str)
+            logger.info(f"Connected to MongoDB: {server_info_pretty_text}")
+    except ConnectionFailure as e:
+        logger.critical("Could not connect to MongoDB: %s" % e)
+
+    mongo_db = motor_client.get_default_database()
+    await init_beanie(database=mongo_db, document_models=document_models)
+    return motor_client
 
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     # Application startup
 
-    await setup_repositories()
-
-    if settings.innopolis_sso:
-        from src.modules.providers.innopolis.routes import oauth
-
-        refresher = TokenRefresher(oauth.innopolis)
-        # noinspection PyAsyncCall
-        asyncio.create_task(refresher.run())
+    motor_client = await setup_repositories()
 
     yield
 
     # Application shutdown
-    from src.api.dependencies import Shared
-
-    Shared.f(AsyncIOMotorClient).close()
+    motor_client.close()

@@ -7,7 +7,7 @@ class UserWithoutSessionException(HTTPException):
     HTTP_401_UNAUTHORIZED
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=self.responses[401]["description"],
@@ -21,7 +21,7 @@ class IncorrectCredentialsException(HTTPException):
     HTTP_401_UNAUTHORIZED
     """
 
-    def __init__(self, no_credentials: bool = False):
+    def __init__(self, no_credentials: bool = False) -> None:
         if no_credentials:
             super().__init__(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -39,7 +39,7 @@ class ClientIncorrectCredentialsException(HTTPException):
     HTTP_401_UNAUTHORIZED
     """
 
-    def __init__(self, no_credentials: bool = False):
+    def __init__(self, no_credentials: bool = False) -> None:
         if no_credentials:
             super().__init__(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -57,7 +57,7 @@ class NotEnoughPermissionsException(HTTPException):
     HTTP_403_FORBIDDEN
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(
             status_code=status.HTTP_403_FORBIDDEN,
             detail=self.responses[403]["description"],
@@ -71,7 +71,7 @@ class InvalidReturnToURL(HTTPException):
     HTTP_400_BAD_REQUEST
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=self.responses[400]["description"],
@@ -85,7 +85,7 @@ class InvalidTelegramWidgetHash(HTTPException):
     HTTP_400_BAD_REQUEST
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=self.responses[400]["description"],

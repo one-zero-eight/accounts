@@ -5,10 +5,10 @@ import hmac
 
 from fastapi import APIRouter, Request
 
-from src.api.dependencies import Shared, UserIdDep, OptionalUserIdDep
+from src.api.dependencies import UserIdDep, OptionalUserIdDep
 from src.config import settings
 from src.exceptions import InvalidTelegramWidgetHash, UserWithoutSessionException
-from src.modules.users.repository import UserRepository
+from src.modules.users.repository import user_repository
 from src.modules.providers.telegram.schemas import TelegramWidgetData, TelegramLoginResponse
 
 router = APIRouter(prefix="/telegram", tags=["Telegram"])
@@ -44,8 +44,6 @@ if settings.telegram:
         status_code=200,
     )
     async def telegram_connect(telegram_data: TelegramWidgetData, user_id: UserIdDep):
-        user_repository = Shared.f(UserRepository)
-
         if not validate_widget_hash(telegram_data):
             raise InvalidTelegramWidgetHash()
 
@@ -62,8 +60,6 @@ if settings.telegram:
     async def telegram_login(
         telegram_data: TelegramWidgetData, user_id: OptionalUserIdDep, request: Request
     ) -> TelegramLoginResponse:
-        user_repository = Shared.f(UserRepository)
-
         if not validate_widget_hash(telegram_data):
             raise InvalidTelegramWidgetHash()
         user_by_telegram_id = await user_repository.read_by_telegram_id(telegram_data.id)

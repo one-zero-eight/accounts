@@ -2,32 +2,16 @@ import datetime
 import random
 from enum import StrEnum
 
-from motor.motor_asyncio import AsyncIOMotorDatabase
+from beanie.odm.operators.update.general import Set
 from pydantic import BaseModel
-from pymongo import ReturnDocument
 
-from src.mongo_object_id import PyObjectId
+from beanie import PydanticObjectId
+from src.storages.mongo.models import EmailFlow
 
 
 def _generate_auth_code() -> str:
     # return random 6-digit code
     return str(random.randint(100_000, 999_999))
-
-
-class EmailFlow(BaseModel):
-    email: str
-    is_sent: bool = False
-    sent_at: datetime.datetime | None = None
-    is_verified: bool = False
-    verified_at: datetime.datetime | None = None
-    verification_code: str | None = None
-    verification_code_expires_at: datetime.datetime | None = None
-    user_id: PyObjectId | None = None
-    client_id: str | None = None
-
-
-class MongoEmailFlow(EmailFlow):
-    object_id: PyObjectId
 
 
 EXPIRATION_TIME = 30  # minutes
@@ -42,60 +26,57 @@ class EmailFlowVerificationStatus(StrEnum):
 
 class EmailFlowVerificationResult(BaseModel):
     status: EmailFlowVerificationStatus
-    email_flow: MongoEmailFlow | None = None
+    email_flow: EmailFlow | None = None
 
 
+# noinspection PyMethodMayBeStatic
 class EmailFlowRepository:
-    def __init__(self, database: AsyncIOMotorDatabase, *, collection: str = "emailFlows") -> None:
-        self.__database = database
-        self.__collection = database[collection]
-
-    async def start_flow(self, email: str, user_id: PyObjectId | None, client_id: str | None) -> MongoEmailFlow:
+    async def start_flow(self, email: str, user_id: PydanticObjectId | None, client_id: str | None) -> EmailFlow:
         verification_code = _generate_auth_code()
         verification_code_expires_at = datetime.datetime.utcnow() + datetime.timedelta(minutes=EXPIRATION_TIME)
 
-        email_flow = dict(
+        email_flow = EmailFlow(
             email=email,
             verification_code=verification_code,
             verification_code_expires_at=verification_code_expires_at,
             user_id=user_id,
             client_id=client_id,
         )
-        EmailFlow.model_validate(email_flow)
-        insert_result = await self.__collection.insert_one(email_flow)
-        return MongoEmailFlow.model_validate(await self.__collection.find_one({"_id": insert_result.inserted_id}))
+        await email_flow.save()
+        return email_flow
 
     async def verify_flow(
-        self, email_flow_id: PyObjectId, verification_code: str, *, user_id: PyObjectId | None, client_id: str | None
+        self, email_flow_id: PydanticObjectId, verification_code: str, *, user_id: PydanticObjectId | None, client_id: str | None
     ) -> EmailFlowVerificationResult:
-        email_flow = await self.__collection.find_one({"_id": email_flow_id})
+        email_flow = await EmailFlow.find_one(EmailFlow.id == email_flow_id)
         if email_flow is None:
             return EmailFlowVerificationResult(status=EmailFlowVerificationStatus.NOT_FOUND)
         if email_flow["verification_code_expires_at"] < datetime.datetime.utcnow():
             # delete flow
-            await self.__collection.delete_one({"_id": email_flow["_id"]})
+            await email_flow.delete()
             return EmailFlowVerificationResult(status=EmailFlowVerificationStatus.EXPIRED)
         if (
-            email_flow["verification_code"] != verification_code
-            or email_flow["client_id"] != client_id
-            or email_flow["user_id"] != user_id
+            email_flow.verification_code != verification_code
+            or email_flow.client_id != client_id
+            or email_flow.user_id != user_id
         ):
             return EmailFlowVerificationResult(status=EmailFlowVerificationStatus.INCORRECT)
         # clear all other verification codes
-        await self.__collection.delete_many(
-            {"email": email_flow["email"], "_id": {"$ne": email_flow["_id"]}, "is_verified": False}
+        await EmailFlow.find_many(
+            EmailFlow.email == email_flow.email,
+            EmailFlow.id != email_flow.id,
+            EmailFlow.is_verified is False,
+        ).delete()
+
+        # update
+        await email_flow.update(Set({EmailFlow.verified_at: datetime.datetime.utcnow(), EmailFlow.is_verified: True}))
+
+        return EmailFlowVerificationResult(status=EmailFlowVerificationStatus.SUCCESS, email_flow=email_flow)
+
+    async def set_sent(self, id: PydanticObjectId) -> None:
+        await EmailFlow.find_one(EmailFlow.id == id).update(
+            Set({EmailFlow.is_sent: True, EmailFlow.sent_at: datetime.datetime.utcnow()})
         )
 
-        email_flow = await self.__collection.find_one_and_update(
-            {"_id": email_flow["_id"]},
-            {"$set": {"is_verified": True, "verification_code": None, "verified_at": datetime.datetime.utcnow()}},
-            return_document=ReturnDocument.AFTER,
-        )
-        return EmailFlowVerificationResult(
-            status=EmailFlowVerificationStatus.SUCCESS, email_flow=MongoEmailFlow.model_validate(email_flow)
-        )
 
-    async def set_sent(self, id: PyObjectId) -> None:
-        await self.__collection.update_one(
-            {"_id": id}, {"$set": {"is_sent": True, "sent_at": datetime.datetime.utcnow()}}
-        )
+email_flow_repository = EmailFlowRepository()

@@ -5,7 +5,7 @@ from datetime import timedelta, datetime
 from authlib.jose import jwt
 
 from src.config import settings
-from src.mongo_object_id import PyObjectId
+from beanie import PydanticObjectId
 
 
 class TokenRepository:
@@ -27,7 +27,7 @@ class TokenRepository:
         return access_token
 
     @classmethod
-    def create_email_flow_token(cls, email_flow_id: PyObjectId) -> str:
+    def create_email_flow_token(cls, email_flow_id: PydanticObjectId) -> str:
         data = {"email_flow_id": str(email_flow_id)}
         access_token = TokenRepository._create_token(data=data, expires_delta=timedelta(hours=1))
         return access_token
