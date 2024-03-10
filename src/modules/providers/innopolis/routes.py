@@ -1,5 +1,7 @@
 __all__ = ["router", "oauth"]
 
+from typing import Literal
+
 from authlib.integrations.base_client import OAuthError
 from authlib.integrations.starlette_client import OAuth
 from fastapi import APIRouter
@@ -24,18 +26,22 @@ if settings.innopolis_sso:
         client_secret=settings.innopolis_sso.client_secret.get_secret_value(),
         # OAuth client will fetch configuration on first request
         server_metadata_url="https://sso.university.innopolis.ru/adfs/.well-known/openid-configuration",
-        client_kwargs={"scope": "openid offline_access", "resource": settings.innopolis_sso.resource_id},
+        client_kwargs={"scope": "openid", "resource": settings.innopolis_sso.resource_id},
     )
 
     # Add type hinting
     oauth.innopolis: oauth.oauth2_client_cls  # noqa
 
     @router.get("/login")
-    async def innopolis_login_or_register(redirect_uri: str, request: Request):
+    async def innopolis_login_or_register(redirect_uri: str, request: Request, prompt: Literal["none"] | None = None):
         ensure_allowed_redirect_uri(redirect_uri)
         request.session.clear()  # Clear session cookie as it is used only during auth
         request.session["redirect_uri"] = redirect_uri
-        return await oauth.innopolis.authorize_redirect(request, settings.innopolis_sso.redirect_uri)
+        if prompt is not None:
+            request.session["prompt"] = prompt
+            return await oauth.innopolis.authorize_redirect(request, settings.innopolis_sso.redirect_uri, prompt=prompt)
+        else:
+            return await oauth.innopolis.authorize_redirect(request, settings.innopolis_sso.redirect_uri)
 
     @router.get("/callback")
     async def innopolis_callback(request: Request):
@@ -43,6 +49,12 @@ if settings.innopolis_sso:
         error = request.query_params.get("error")
         if error:
             description = request.query_params.get("error_description")
+            prompt = request.session.get("prompt")
+            if prompt == "none":
+                redirect_uri = request.session.pop("redirect_uri")
+                ensure_allowed_redirect_uri(redirect_uri)
+                request.session.clear()
+                return RedirectResponse(redirect_uri, status_code=302)
             return JSONResponse(status_code=403, content={"error": error, "description": description})
         try:
             token = await oauth.innopolis.authorize_access_token(request)
