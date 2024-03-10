@@ -1,0 +1,33 @@
+# This is a Docker Compose configuration for local use.
+# In production use docker-compose.prod.yaml
+
+# Run all services:
+# docker compose up --build --detach
+
+version: "3"
+
+services:
+  api:
+    build: . # See Dockerfile for more details
+    depends_on: [ db ]
+    restart: always
+    ports:
+      - "8002:8000"
+    volumes:
+      - "./settings.yaml:/code/settings.yaml:ro" # Read-only settings file
+    env_file: .env # You can specify some Uvicorn settings in .env file
+    environment:
+      - TZ=Europe/Moscow
+
+  db:
+    # See more: https://registry.hub.docker.com/_/mongo
+    image: "mongo:7.0"
+    restart: always
+    volumes:
+      - "mongodb:/data/db"
+    ports:
+      - "27017:27017"
+    env_file: .env # Set username and password in .env file
+
+volumes:
+  mongodb:
