@@ -16,7 +16,7 @@ async def get_me(user_id: UserIdDep, request: Request) -> User:
     """
     Get current user info if authenticated
     """
-    user = user_repository.read(user_id)
+    user = await user_repository.read(user_id)
     if user is None:
         # clear session cookie if user is not found
         request.session.clear()

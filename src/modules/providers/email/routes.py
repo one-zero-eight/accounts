@@ -34,12 +34,14 @@ if settings.smtp:
         email_flow = await email_flow_repository.start_flow(email, user_id, None)
         message = smtp_repository.render_verification_message(email_flow.email, email_flow.verification_code)
         smtp_repository.send(message, email_flow.email)
-        await email_flow_repository.set_sent(email_flow.object_id)
-        return EmailFlowReference(email_flow_id=email_flow.object_id)
+        await email_flow_repository.set_sent(email_flow.id)
+        return EmailFlowReference(email_flow_id=email_flow.id)
 
     @router.post("/validate-code-for-users", response_model=EmailFlowResult)
     async def end_email_flow(
-        email_flow_id: Annotated[PydanticObjectId, Body()], verification_code: Annotated[str, Body()], user_id: UserIdDep
+        email_flow_id: Annotated[PydanticObjectId, Body()],
+        verification_code: Annotated[str, Body()],
+        user_id: UserIdDep,
     ) -> EmailFlowResult:
         return await _validate_code_route(email_flow_id, verification_code, user_id, None)
 
@@ -52,7 +54,10 @@ if settings.smtp:
         return await _validate_code_route(email_flow_id, verification_code, None, client_id)
 
     async def _validate_code_route(
-        email_flow_id: PydanticObjectId, verification_code: str, user_id: PydanticObjectId | None, client_id: PydanticObjectId | None
+        email_flow_id: PydanticObjectId,
+        verification_code: str,
+        user_id: PydanticObjectId | None,
+        client_id: PydanticObjectId | None,
     ):
         verification_result = await email_flow_repository.verify_flow(
             email_flow_id, verification_code, user_id=user_id, client_id=client_id
@@ -61,9 +66,7 @@ if settings.smtp:
             return EmailFlowResult(
                 status=verification_result.status,
                 email=verification_result.email_flow.email,
-                email_verification_token=TokenRepository.create_email_flow_token(
-                    verification_result.email_flow.object_id
-                ),
+                email_verification_token=TokenRepository.create_email_flow_token(verification_result.email_flow.id),
             )
         else:
             return EmailFlowResult(status=verification_result.status)

@@ -1,12 +1,27 @@
 from fastapi import APIRouter, Request
 
-from src.api.dependencies import UserIdDep
-from src.exceptions import ClientIncorrectCredentialsException
+from src.api.dependencies import UserIdDep, AdminDep
+from src.exceptions import ClientIncorrectCredentialsException, ObjectNotFound
 from src.modules.clients.dependencies import ClientRegistrationAccessTokenDep
 from src.modules.clients.repository import client_repository
 from src.modules.clients.schemas import ClientRead, ClientUpdate
 
 router = APIRouter(prefix="/clients", tags=["Clients"])
+
+
+@router.get("/admin-get/", response_model_exclude_unset=True)
+async def admin_get_client(client_id: str, _admin_dep: AdminDep) -> ClientRead:
+    client = await client_repository.read(client_id)
+    if client is None:
+        raise ObjectNotFound()
+    return ClientRead(
+        client_id=client.client_id,
+        client_secret=client.client_secret,
+        owner_id=client.owner_id,
+        registration_client_uri=str(client.registration_client_uri),  # only if changed
+        registration_access_token=client.registration_access_token,  # only if changed
+        allowed_redirect_uris=client.allowed_redirect_uris,
+    )
 
 
 @router.get("/register/{client_id}", response_model_exclude_unset=True)

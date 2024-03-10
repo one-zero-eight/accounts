@@ -1,9 +1,9 @@
-__all__ = ["UserIdDep", "OptionalUserIdDep", "UserDep", "VerifiedClientIdDep"]
+__all__ = ["UserIdDep", "OptionalUserIdDep", "UserDep", "VerifiedClientIdDep", "AdminDep"]
 
 from typing import Annotated
 from fastapi import Request, Depends
 
-from src.exceptions import UserWithoutSessionException
+from src.exceptions import UserWithoutSessionException, NotEnoughPermissionsException
 from src.modules.users.repository import user_repository
 from src.storages.mongo.models import User
 from beanie import PydanticObjectId
@@ -22,7 +22,7 @@ async def _get_optional_uid_from_session(request: Request) -> PydanticObjectId |
     if uid is None:
         return None
     uid = PydanticObjectId(uid)
-    exists = user_repository.exists(uid)
+    exists = await user_repository.exists(uid)
     if not exists:
         request.session.clear()
         raise UserWithoutSessionException()
@@ -36,8 +36,15 @@ async def _get_user(request: Request) -> User:
     return user
 
 
+async def _get_admin_dep(user: User = Depends(_get_user)) -> User:
+    if not user.is_admin:
+        raise NotEnoughPermissionsException("You are not an admin")
+    return user
+
+
 UserIdDep = Annotated[PydanticObjectId, Depends(_get_uid_from_session)]
 OptionalUserIdDep = Annotated[PydanticObjectId | None, Depends(_get_optional_uid_from_session, use_cache=False)]
 UserDep = Annotated[User, Depends(_get_user)]
+AdminDep = Annotated[User, Depends(_get_admin_dep)]
 
 from src.modules.clients.dependencies import VerifiedClientIdDep  # noqa: E402

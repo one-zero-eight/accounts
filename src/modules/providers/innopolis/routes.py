@@ -58,7 +58,7 @@ if settings.innopolis_sso:
         redirect_uri = request.session.pop("redirect_uri")
         ensure_allowed_redirect_uri(redirect_uri)
         request.session.clear()  # Clear session cookie as it is used only during auth
-        request.session["uid"] = str(user.object_id)
+        request.session["uid"] = str(user.id)
         return RedirectResponse(redirect_uri, status_code=302)
 
     async def recover_mismatching_state(request: Request):
@@ -79,7 +79,7 @@ if settings.innopolis_sso:
             if redirect_uri:
                 # And we know where to return a user after authentication. Let's ask them to authenticate again.
                 ensure_allowed_redirect_uri(redirect_uri)
-                url = request.url_for("innopolis_login").include_query_params(redirect_uri=redirect_uri)
+                url = request.url_for("innopolis_login_or_register").include_query_params(redirect_uri=redirect_uri)
                 return RedirectResponse(url, status_code=302)
             else:
                 # We don't know anything, so let's return the user to the main page.

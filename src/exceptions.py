@@ -57,10 +57,10 @@ class NotEnoughPermissionsException(HTTPException):
     HTTP_403_FORBIDDEN
     """
 
-    def __init__(self) -> None:
+    def __init__(self, detail: str | None = None) -> None:
         super().__init__(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail=self.responses[403]["description"],
+            detail=detail or self.responses[403]["description"],
         )
 
     responses = {403: {"description": "Not enough permissions"}}
@@ -92,3 +92,17 @@ class InvalidTelegramWidgetHash(HTTPException):
         )
 
     responses = {400: {"description": "Invalid Telegram widget hash"}}
+
+
+class ObjectNotFound(HTTPException):
+    """
+    HTTP_404_NOT_FOUND
+    """
+
+    def __init__(self, detail: str = None):
+        super().__init__(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=detail or self.responses[404]["description"],
+        )
+
+    responses = {404: {"description": "Object with such properties not found"}}

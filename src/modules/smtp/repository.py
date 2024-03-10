@@ -52,7 +52,7 @@ class SMTPRepository:
 
 
 if settings.smtp:
-    smtp_repository = SMTPRepository()
+    smtp_repository: SMTPRepository = SMTPRepository()
 else:
     import warnings
 

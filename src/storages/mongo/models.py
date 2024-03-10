@@ -16,7 +16,7 @@ class ClientType(StrEnum):
     confidential = "confidential"
 
 
-class Client(CustomDocument):
+class ClientSchema(BaseModel):
     client_id: Annotated[str, Indexed(unique=True)]
     client_secret: str | None = None
     client_type: ClientType = ClientType.confidential
@@ -26,7 +26,11 @@ class Client(CustomDocument):
     approved: bool = False
 
 
-class EmailFlow(CustomDocument):
+class Client(ClientSchema, CustomDocument):
+    pass
+
+
+class EmailSchema(BaseModel):
     email: str
     is_sent: bool = False
     sent_at: datetime.datetime | None = None
@@ -38,9 +42,22 @@ class EmailFlow(CustomDocument):
     client_id: str | None = None
 
 
-class User(CustomDocument):
+class EmailFlow(EmailSchema, CustomDocument):
+    pass
+
+
+class UserSchema(BaseModel):
     innopolis_sso: UserInfoFromSSO | None = None
     telegram: TelegramWidgetData | None = None
+    innohassle_admin: bool = False
+
+    @property
+    def is_admin(self) -> bool:
+        return self.innohassle_admin
+
+
+class User(UserSchema, CustomDocument):
+    pass
 
 
 class ScopeSettings(BaseModel):
@@ -48,15 +65,14 @@ class ScopeSettings(BaseModel):
     clients_allowed_for: list[str] = Field(default_factory=list)
 
 
-class Resource(CustomDocument):
+class ResourceSchema(BaseModel):
     resource_id: Annotated[str, Indexed(unique=True)]
     scopes: dict[str, ScopeSettings | None] = Field(default_factory=dict)
-    owner_id: PydanticObjectId
+    owner_id: PydanticObjectId | None = None
 
 
-document_models = [
-    User,
-    Resource,
-    Client,
-    EmailFlow,
-]
+class Resource(ResourceSchema, CustomDocument):
+    pass
+
+
+document_models = [User, Resource, Client, EmailFlow]

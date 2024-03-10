@@ -2,7 +2,7 @@ from beanie.odm.operators.update.general import Set
 
 from src.modules.providers.innopolis.schemas import UserInfoFromSSO
 from src.modules.providers.telegram.schemas import TelegramWidgetData
-from beanie import PydanticObjectId
+from beanie import PydanticObjectId, UpdateResponse
 from src.storages.mongo.models import User
 
 
@@ -12,7 +12,8 @@ class UserRepository:
         # check if user exists
         user = await User.find_one(User.innopolis_sso.email == user_info.email).upsert(
             Set({User.innopolis_sso: user_info.model_dump()}),
-            on_insert=User(innopolis_sso=user_info.model_dump()),
+            on_insert=User(innopolis_sso=user_info),
+            response_type=UpdateResponse.NEW_DOCUMENT,
         )
 
         return user
@@ -38,4 +39,4 @@ class UserRepository:
         return user
 
 
-user_repository = UserRepository()
+user_repository: UserRepository = UserRepository()

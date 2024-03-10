@@ -46,7 +46,12 @@ class EmailFlowRepository:
         return email_flow
 
     async def verify_flow(
-        self, email_flow_id: PydanticObjectId, verification_code: str, *, user_id: PydanticObjectId | None, client_id: str | None
+        self,
+        email_flow_id: PydanticObjectId,
+        verification_code: str,
+        *,
+        user_id: PydanticObjectId | None,
+        client_id: str | None,
     ) -> EmailFlowVerificationResult:
         email_flow = await EmailFlow.find_one(EmailFlow.id == email_flow_id)
         if email_flow is None:
@@ -79,4 +84,4 @@ class EmailFlowRepository:
         )
 
 
-email_flow_repository = EmailFlowRepository()
+email_flow_repository: EmailFlowRepository = EmailFlowRepository()

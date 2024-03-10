@@ -72,5 +72,5 @@ if settings.telegram:
         if user_by_telegram_id is None:
             raise UserWithoutSessionException()
         request.session.clear()
-        request.session["uid"] = str(user_by_telegram_id.object_id)
+        request.session["uid"] = str(user_by_telegram_id.id)
         return TelegramLoginResponse(need_to_connect=False)

@@ -33,11 +33,21 @@ async def setup_repositories() -> AsyncIOMotorClient:
     return motor_client
 
 
+async def setup_predefined() -> None:
+    from src.modules.resources.repository import resource_repository
+
+    for resource in settings.predefined.resources:
+        if not await resource_repository.read(resource.resource_id):
+            logger.info(f"Creating predefined resource {resource=}")
+            await resource_repository.create(resource)
+
+
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     # Application startup
 
     motor_client = await setup_repositories()
+    await setup_predefined()
 
     yield
 

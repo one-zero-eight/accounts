@@ -65,4 +65,4 @@ class ClientRepository:
         await Client.update_one(Client.client_id == client_id, Set({Client.owner_id: owner_id}))
 
 
-client_repository = ClientRepository()
+client_repository: ClientRepository = ClientRepository()
