@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Query
 from pydantic import BaseModel
 
 from src.api.dependencies import AdminDep, UserDep
@@ -28,11 +28,13 @@ async def get_jwks():
         **NotEnoughPermissionsException.responses,
     },
 )
-async def generate_token(_user: AdminDep, sub: str) -> TokenData:
+async def generate_token(
+    _user: AdminDep, sub: str, scope: str | None = Query(None, description="Space delimited list of scopes")
+) -> TokenData:
     """
     Generate access token with some sub in `sub` field
     """
-    token = TokenRepository.create_access_token(sub)
+    token = TokenRepository.create_access_token(sub, scope.split(" ") if scope else None)
     return TokenData(access_token=token)
 
 

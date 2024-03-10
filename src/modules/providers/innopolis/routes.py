@@ -13,7 +13,7 @@ from src.logging_ import logger
 from src.modules.providers.innopolis.schemas import UserInfoFromSSO
 from src.modules.users.repository import user_repository
 
-router = APIRouter(prefix="/innopolis", tags=["Innopolis SSO"])
+router = APIRouter(prefix="/innopolis")
 
 if settings.innopolis_sso:
     oauth = OAuth()

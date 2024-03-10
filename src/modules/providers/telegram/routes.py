@@ -11,7 +11,7 @@ from src.exceptions import InvalidTelegramWidgetHash, UserWithoutSessionExceptio
 from src.modules.users.repository import user_repository
 from src.modules.providers.telegram.schemas import TelegramWidgetData, TelegramLoginResponse
 
-router = APIRouter(prefix="/telegram", tags=["Telegram"])
+router = APIRouter(prefix="/telegram")
 
 
 def _get_secret_key() -> bytes:

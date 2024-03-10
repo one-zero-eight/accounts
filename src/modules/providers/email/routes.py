@@ -11,7 +11,7 @@ from src.modules.providers.email.repository import EmailFlowVerificationStatus, 
 from src.modules.tokens.repository import TokenRepository
 from beanie import PydanticObjectId
 
-router = APIRouter(prefix="/email", tags=["Email"])
+router = APIRouter(prefix="/email")
 
 
 class EmailFlowReference(BaseModel):

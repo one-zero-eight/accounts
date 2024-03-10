@@ -10,6 +10,7 @@ from src.api import docs
 from src.api.lifespan import lifespan
 from src.api.routers import routers
 from src.config import settings
+from src.config_schema import Environment
 
 app = FastAPI(
     title=docs.TITLE,
@@ -37,12 +38,16 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-same_site = "lax" if settings.environment == "production" else "none"
+same_site = "lax" if settings.environment == Environment.PRODUCTION else "none"
 app.add_middleware(
     SessionMiddleware,
-    same_site=same_site,
     secret_key=settings.auth.session_secret_key.get_secret_value(),
+    session_cookie="__Secure-accounts-session",
+    max_age=14 * 24 * 60 * 60,  # 14 days, in seconds
+    path=settings.app_root_path or "/",
+    same_site=same_site,
     https_only=True,
+    domain=None,
 )
 
 for router in routers:

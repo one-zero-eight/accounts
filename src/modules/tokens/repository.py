@@ -13,24 +13,26 @@ class TokenRepository:
     ALGORITHM = "RS256"
 
     @classmethod
-    def _create_token(cls, data: dict, expires_delta: timedelta) -> str:
+    def _create_token(cls, data: dict, expires_delta: timedelta, scopes: list[str] | None = None) -> str:
         payload = data.copy()
         issued_at = datetime.utcnow()
         expire = issued_at + expires_delta
         payload.update({"exp": expire, "iat": issued_at})
+        if scopes:
+            payload["scope"] = " ".join(scopes)
         encoded_jwt = jwt.encode({"alg": cls.ALGORITHM}, payload, settings.auth.jwt_private_key.get_secret_value())
         return str(encoded_jwt, "utf-8")
 
     @classmethod
-    def create_access_token(cls, sub: Any) -> str:
+    def create_access_token(cls, sub: Any, scopes: list[str] | None) -> str:
         data = {"sub": str(sub)}
-        access_token = TokenRepository._create_token(data=data, expires_delta=timedelta(days=90))
+        access_token = TokenRepository._create_token(data=data, expires_delta=timedelta(days=90), scopes=scopes)
         return access_token
 
     @classmethod
     def create_user_access_token(cls, user_id: PydanticObjectId) -> str:
         data = {"uid": str(user_id)}
-        access_token = TokenRepository._create_token(data=data, expires_delta=timedelta(days=1))
+        access_token = TokenRepository._create_token(data=data, expires_delta=timedelta(days=1), scopes=["me"])
         return access_token
 
     @classmethod
