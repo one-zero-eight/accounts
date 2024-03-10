@@ -1,0 +1,11 @@
+# Ignore everything
+*
+
+# Except code
+!/src/
+!/deploy/docker-entrypoint.sh
+!/pyproject.toml
+!/poetry.lock
+
+# And ignore cache files in the code
+__pycache__
