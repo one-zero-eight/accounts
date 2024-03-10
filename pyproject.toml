@@ -18,6 +18,11 @@ beanie = "^1.25.0"
 pydantic = {extras = ["email"], version = "^2.6.3"}
 httpx = "^0.27.0"
 
+[tool.poetry.group.prod]
+optional = true
+[tool.poetry.group.prod.dependencies]
+gunicorn = "21.2.0"
+
 [tool.poetry.group.dev]
 optional = true
 [tool.poetry.group.dev.dependencies]
