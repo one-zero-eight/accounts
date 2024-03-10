@@ -56,7 +56,7 @@ class EmailFlowRepository:
         email_flow = await EmailFlow.find_one(EmailFlow.id == email_flow_id)
         if email_flow is None:
             return EmailFlowVerificationResult(status=EmailFlowVerificationStatus.NOT_FOUND)
-        if email_flow["verification_code_expires_at"] < datetime.datetime.utcnow():
+        if email_flow.verification_code_expires_at < datetime.datetime.utcnow():
             # delete flow
             await email_flow.delete()
             return EmailFlowVerificationResult(status=EmailFlowVerificationStatus.EXPIRED)

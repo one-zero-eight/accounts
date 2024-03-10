@@ -1,6 +1,7 @@
 __all__ = ["TokenRepository"]
 
 from datetime import timedelta, datetime
+from typing import Any
 
 from authlib.jose import jwt
 
@@ -21,9 +22,15 @@ class TokenRepository:
         return str(encoded_jwt, "utf-8")
 
     @classmethod
-    def create_access_token(cls, user_id: int) -> str:
-        data = {"sub": str(user_id)}
+    def create_access_token(cls, sub: Any) -> str:
+        data = {"sub": str(sub)}
         access_token = TokenRepository._create_token(data=data, expires_delta=timedelta(days=90))
+        return access_token
+
+    @classmethod
+    def create_user_access_token(cls, user_id: PydanticObjectId) -> str:
+        data = {"uid": str(user_id)}
+        access_token = TokenRepository._create_token(data=data, expires_delta=timedelta(days=1))
         return access_token
 
     @classmethod

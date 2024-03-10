@@ -1,36 +1,14 @@
 import datetime
-from enum import StrEnum
-from typing import Annotated
 
-from beanie import Indexed
-from pydantic import Field, BaseModel
+from beanie import PydanticObjectId
+from pydantic import BaseModel
 
 from src.modules.providers.innopolis.schemas import UserInfoFromSSO
 from src.modules.providers.telegram.schemas import TelegramWidgetData
-from beanie import PydanticObjectId
 from src.storages.mongo.__base__ import CustomDocument
 
 
-class ClientType(StrEnum):
-    public = "public"
-    confidential = "confidential"
-
-
-class ClientSchema(BaseModel):
-    client_id: Annotated[str, Indexed(unique=True)]
-    client_secret: str | None = None
-    client_type: ClientType = ClientType.confidential
-    registration_access_token: str
-    owner_id: PydanticObjectId | None = None
-    allowed_redirect_uris: list[str] = Field(default_factory=list)
-    approved: bool = False
-
-
-class Client(ClientSchema, CustomDocument):
-    pass
-
-
-class EmailSchema(BaseModel):
+class EmailFlowSchema(BaseModel):
     email: str
     is_sent: bool = False
     sent_at: datetime.datetime | None = None
@@ -42,7 +20,7 @@ class EmailSchema(BaseModel):
     client_id: str | None = None
 
 
-class EmailFlow(EmailSchema, CustomDocument):
+class EmailFlow(EmailFlowSchema, CustomDocument):
     pass
 
 
@@ -60,19 +38,4 @@ class User(UserSchema, CustomDocument):
     pass
 
 
-class ScopeSettings(BaseModel):
-    allowed_for_all: bool = False
-    clients_allowed_for: list[str] = Field(default_factory=list)
-
-
-class ResourceSchema(BaseModel):
-    resource_id: Annotated[str, Indexed(unique=True)]
-    scopes: dict[str, ScopeSettings | None] = Field(default_factory=dict)
-    owner_id: PydanticObjectId | None = None
-
-
-class Resource(ResourceSchema, CustomDocument):
-    pass
-
-
-document_models = [User, Resource, Client, EmailFlow]
+document_models = [User, EmailFlow]

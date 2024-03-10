@@ -38,5 +38,9 @@ class UserRepository:
         user = await User.find_one(User.telegram.id == telegram_id)
         return user
 
+    async def read_by_innomail(self, email: str) -> User | None:
+        user = await User.find_one(User.innopolis_sso.email == email)
+        return user
+
 
 user_repository: UserRepository = UserRepository()

@@ -1,4 +1,4 @@
-__all__ = ["UserIdDep", "OptionalUserIdDep", "UserDep", "VerifiedClientIdDep", "AdminDep"]
+__all__ = ["UserIdDep", "OptionalUserIdDep", "UserDep", "AdminDep"]
 
 from typing import Annotated
 from fastapi import Request, Depends
@@ -42,9 +42,8 @@ async def _get_admin_dep(user: User = Depends(_get_user)) -> User:
     return user
 
 
+
 UserIdDep = Annotated[PydanticObjectId, Depends(_get_uid_from_session)]
 OptionalUserIdDep = Annotated[PydanticObjectId | None, Depends(_get_optional_uid_from_session, use_cache=False)]
 UserDep = Annotated[User, Depends(_get_user)]
 AdminDep = Annotated[User, Depends(_get_admin_dep)]
-
-from src.modules.clients.dependencies import VerifiedClientIdDep  # noqa: E402
