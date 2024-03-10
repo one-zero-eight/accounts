@@ -39,10 +39,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 same_site = "lax" if settings.environment == Environment.PRODUCTION else "none"
+session_cookie = "__Secure-accounts-session" if settings.environment == Environment.PRODUCTION else "accounts-session"
 app.add_middleware(
     SessionMiddleware,
     secret_key=settings.auth.session_secret_key.get_secret_value(),
-    session_cookie="__Secure-accounts-session",
+    session_cookie=session_cookie,
     max_age=14 * 24 * 60 * 60,  # 14 days, in seconds
     path=settings.app_root_path or "/",
     same_site=same_site,

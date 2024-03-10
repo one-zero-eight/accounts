@@ -1,5 +1,6 @@
 __all__ = ["router", "oauth"]
 
+import traceback
 from typing import Literal
 
 from authlib.integrations.base_client import OAuthError
@@ -59,6 +60,8 @@ if settings.innopolis_sso:
         try:
             token = await oauth.innopolis.authorize_access_token(request)
         except OAuthError:
+            logger.warning("OAuth error")
+            traceback.print_exc()
             # Session is different on 'login' and 'callback'
             return await recover_mismatching_state(request)
 

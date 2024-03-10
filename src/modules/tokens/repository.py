@@ -43,5 +43,5 @@ class TokenRepository:
 
     @classmethod
     def get_jwks(cls) -> dict:
-        jwk = JsonWebKey.import_key(settings.auth.jwt_public_key, {"kty": "RSA", "alg": "RS256"})
+        jwk = JsonWebKey.import_key(settings.auth.jwt_public_key, {"kty": "RSA", "alg": "RS256", "use": "sig"})
         return {"keys": [jwk.as_dict()]}
