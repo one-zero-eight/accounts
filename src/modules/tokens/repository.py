@@ -3,7 +3,7 @@ __all__ = ["TokenRepository"]
 from datetime import timedelta, datetime
 from typing import Any
 
-from authlib.jose import jwt
+from authlib.jose import jwt, JsonWebKey
 
 from src.config import settings
 from beanie import PydanticObjectId
@@ -38,3 +38,8 @@ class TokenRepository:
         data = {"email_flow_id": str(email_flow_id)}
         access_token = TokenRepository._create_token(data=data, expires_delta=timedelta(hours=1))
         return access_token
+
+    @classmethod
+    def get_jwks(cls) -> dict:
+        jwk = JsonWebKey.import_key(settings.auth.jwt_public_key, {"kty": "RSA", "alg": "RS256"})
+        return {"keys": [jwk.as_dict()]}

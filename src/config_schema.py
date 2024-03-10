@@ -3,10 +3,7 @@ from pathlib import Path
 from typing import Optional
 
 import yaml
-from pydantic import BaseModel, SecretStr, ConfigDict, Field
-
-from src.modules.resources.routes import CreateResource
-from src.storages.mongo.models import ScopeSettings
+from pydantic import BaseModel, SecretStr, ConfigDict
 
 
 class Environment(StrEnum):
@@ -66,19 +63,6 @@ class Mongo(SettingsEntityModel):
     "MongoDB database connection URI"
 
 
-class Predefined(SettingsEntityModel):
-    """Predefined settings. Will be used in setup stage."""
-
-    resources: list[CreateResource] = Field(
-        default=[
-            CreateResource(
-                resource_id="music-room",
-                scopes={"all": ScopeSettings(clients_allowed_for=["music-room-api"])},
-            )
-        ]
-    )
-
-
 class Settings(SettingsEntityModel):
     """
     Settings for the application. Get settings from `settings.yaml` file.
@@ -102,8 +86,6 @@ class Settings(SettingsEntityModel):
     "Telegram settings"
     smtp: Optional[SMTP] = None
     "SMTP settings"
-    predefined: Predefined = Field(default_factory=Predefined)
-    "Predefined settings"
 
     @classmethod
     def from_yaml(cls, path: Path) -> "Settings":

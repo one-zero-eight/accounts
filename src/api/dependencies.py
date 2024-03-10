@@ -42,7 +42,6 @@ async def _get_admin_dep(user: User = Depends(_get_user)) -> User:
     return user
 
 
-
 UserIdDep = Annotated[PydanticObjectId, Depends(_get_uid_from_session)]
 OptionalUserIdDep = Annotated[PydanticObjectId | None, Depends(_get_optional_uid_from_session, use_cache=False)]
 UserDep = Annotated[User, Depends(_get_user)]

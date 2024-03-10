@@ -5,15 +5,23 @@ from src.api.dependencies import AdminDep, UserDep
 from src.exceptions import UserWithoutSessionException, NotEnoughPermissionsException
 from src.modules.tokens.repository import TokenRepository
 
-router = APIRouter(prefix="/tokens", tags=["Tokens"])
+router = APIRouter(tags=["Tokens"])
 
 
 class TokenData(BaseModel):
     access_token: str
 
 
+@router.get("/.well-known/jwks.json")
+async def get_jwks():
+    """
+    Get jwks for jwt
+    """
+    return TokenRepository.get_jwks()
+
+
 @router.get(
-    "/generate-access-token",
+    "/tokens/generate-access-token",
     responses={
         200: {"description": "Token"},
         **UserWithoutSessionException.responses,
@@ -29,7 +37,7 @@ async def generate_token(_user: AdminDep, sub: str) -> TokenData:
 
 
 @router.get(
-    "/generate-my-token",
+    "/tokens/generate-my-token",
     responses={200: {"description": "Token"}, **UserWithoutSessionException.responses},
     response_model=TokenData,
 )

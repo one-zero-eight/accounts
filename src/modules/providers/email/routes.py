@@ -7,7 +7,6 @@ from pydantic import EmailStr, BaseModel
 
 from src.api.dependencies import UserIdDep
 from src.config import settings
-from src.modules.clients.dependencies import VerifiedClientIdDep
 from src.modules.providers.email.repository import EmailFlowVerificationStatus, email_flow_repository
 from src.modules.tokens.repository import TokenRepository
 from beanie import PydanticObjectId
@@ -44,14 +43,6 @@ if settings.smtp:
         user_id: UserIdDep,
     ) -> EmailFlowResult:
         return await _validate_code_route(email_flow_id, verification_code, user_id, None)
-
-    @router.post("/validate-code-for-clients", response_model=EmailFlowResult)
-    async def end_email_flow_for_clients(
-        email_flow_id: Annotated[PydanticObjectId, Body()],
-        verification_code: Annotated[str, Body()],
-        client_id: VerifiedClientIdDep,
-    ) -> EmailFlowResult:
-        return await _validate_code_route(email_flow_id, verification_code, None, client_id)
 
     async def _validate_code_route(
         email_flow_id: PydanticObjectId,
