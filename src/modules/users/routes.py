@@ -30,17 +30,31 @@ async def get_me(user_id: UserIdDep, request: Request) -> User:
     return user
 
 
+def allowed_user_id_for_jwt_claims(user_id: PydanticObjectId, jwt_claims: JWTClaims) -> bool:
+    scope_string = jwt_claims.get("scope", "")
+    scopes = scope_string.split() if scope_string else []
+    users_scopes = [scope for scope in scopes if scope.startswith("users")]
+    if "users" in users_scopes:  # wildcard
+        return True
+
+    if f"users:{user_id}" in users_scopes:
+        return True
+
+    return False
+
+
 @router.get(
     "/by-telegram-id/{telegram_id}",
     response_model=User,
     responses={200: {"description": "User info"}, **ObjectNotFound.responses, **verify_access_token_responses},
 )
-async def get_user_by_telegram_id(telegram_id: int, _: UsersScopeDep) -> User:
+async def get_user_by_telegram_id(telegram_id: int, jwt_claims: UsersScopeDep) -> User:
     """
     Get user by telegram id
     """
+
     user = await user_repository.read_by_telegram_id(telegram_id)
-    if user is None:
+    if user is None or not allowed_user_id_for_jwt_claims(user.id, jwt_claims):
         raise ObjectNotFound("User not found")
 
     return user
@@ -51,14 +65,13 @@ async def get_user_by_telegram_id(telegram_id: int, _: UsersScopeDep) -> User:
     response_model=User,
     responses={200: {"description": "User info"}, **ObjectNotFound.responses, **verify_access_token_responses},
 )
-async def get_user_by_id(user_id: PydanticObjectId, _: UsersScopeDep) -> User:
+async def get_user_by_id(user_id: PydanticObjectId, jwt_claims: UsersScopeDep) -> User:
     """
     Get user by id
     """
     user = await user_repository.read(user_id)
-    if user is None:
+    if user is None or not allowed_user_id_for_jwt_claims(user.id, jwt_claims):
         raise ObjectNotFound("User not found")
-
     return user
 
 
@@ -67,12 +80,11 @@ async def get_user_by_id(user_id: PydanticObjectId, _: UsersScopeDep) -> User:
     response_model=User,
     responses={200: {"description": "User info"}, **ObjectNotFound.responses, **verify_access_token_responses},
 )
-async def get_user_by_innomail(email: str, _: UsersScopeDep) -> User:
+async def get_user_by_innomail(email: str, jwt_claims: UsersScopeDep) -> User:
     """
     Get user by email
     """
     user = await user_repository.read_by_innomail(email)
-    if user is None:
+    if user is None or not allowed_user_id_for_jwt_claims(user.id, jwt_claims):
         raise ObjectNotFound("User not found")
-
     return user

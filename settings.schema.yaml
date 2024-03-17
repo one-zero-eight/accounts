@@ -38,6 +38,24 @@ $defs:
     - testing
     title: Environment
     type: string
+  InNoHassleAccounts:
+    additionalProperties: false
+    description: Use production InNoHassle-Accounts API for authentication in local
+      development
+    properties:
+      api_url:
+        title: Api Url
+        type: string
+      api_jwt_token:
+        format: password
+        title: Api Jwt Token
+        type: string
+        writeOnly: true
+    required:
+    - api_url
+    - api_jwt_token
+    title: InNoHassleAccounts
+    type: object
   InnopolisSSO:
     additionalProperties: false
     description: Innopolis SSO settings (only for production)
@@ -152,6 +170,11 @@ properties:
   telegram:
     anyOf:
     - $ref: '#/$defs/Telegram'
+    - type: 'null'
+    default: null
+  innohassle_accounts:
+    anyOf:
+    - $ref: '#/$defs/InNoHassleAccounts'
     - type: 'null'
     default: null
   smtp:

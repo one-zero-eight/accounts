@@ -9,9 +9,9 @@ class UserInfoFromSSO(BaseModel):
     email: str
     name: str | None = None
 
-    access_token: str = Field(exclude=True)
-    refresh_token: str = Field(exclude=True)
-    expires_at: datetime.datetime = Field(exclude=True)
+    access_token: str | None = Field(None, exclude=True)
+    refresh_token: str | None = Field(None, exclude=True)
+    expires_at: datetime.datetime | None = Field(None, exclude=True)
     issued_at: datetime.datetime | None = None
 
     @classmethod

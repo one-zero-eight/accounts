@@ -34,6 +34,16 @@ async def verify_access_token(security_scopes: SecurityScopes, token: str | None
         scope_string = payload.get("scope", None)
         scopes = scope_string.split() if scope_string else []
         for scope in security_scopes.scopes:
+            if scope == "users":
+                # check by prefix
+                if not any(scope_.startswith("users") for scope_ in scopes):
+                    raise HTTPException(
+                        status_code=status.HTTP_401_UNAUTHORIZED,
+                        detail=f"Not enough permissions {scope}",
+                        headers={"WWW-Authenticate": authenticate_value},
+                    )
+                continue
+
             if scope not in scopes:
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,

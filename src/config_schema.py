@@ -36,6 +36,17 @@ class Telegram(SettingsEntityModel):
     "Bot token for Telegram"
 
 
+class InNoHassleAccounts(SettingsEntityModel):
+    """
+    Use production InNoHassle-Accounts API for authentication in local development
+    """
+
+    api_url: str
+    "API URL for InNoHassle-Accounts"
+    api_jwt_token: SecretStr
+    "JWT token for accessing the Accounts API as a service"
+
+
 class Authentication(SettingsEntityModel):
     allowed_domains: list[str] = ["localhost", "127.0.0.1", "0.0.0.0"]
     "Allowed domains for redirecting after authentication"
@@ -84,6 +95,8 @@ class Settings(SettingsEntityModel):
     "Innopolis SSO settings (only for production)"
     telegram: Optional[Telegram] = None
     "Telegram settings"
+    innohassle_accounts: Optional[InNoHassleAccounts] = None
+    "InNoHassle-Accounts settings"
     smtp: Optional[SMTP] = None
     "SMTP settings"
 
