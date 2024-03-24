@@ -41,4 +41,6 @@ if settings.innohassle_accounts:
                 raise e
 
     def get_authorized_client() -> httpx.AsyncClient:
-        return httpx.AsyncClient(headers={"Authorization": f"Bearer {settings.innohassle_accounts.api_jwt_token}"})
+        return httpx.AsyncClient(
+            headers={"Authorization": f"Bearer {settings.innohassle_accounts.api_jwt_token.get_secret_value()}"}
+        )
