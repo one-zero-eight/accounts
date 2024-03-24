@@ -59,3 +59,19 @@ for router in routers:
 @app.get("/", tags=["Root"], include_in_schema=False)
 async def redirect_to_docs(request: Request):
     return RedirectResponse(url=request.url_for("swagger_ui_html"))
+
+
+@app.get("/docs", tags=["System"], include_in_schema=False)
+async def swagger_ui_html(request: Request):
+    from fastapi.openapi.docs import get_swagger_ui_html
+
+    root_path = request.scope.get("root_path", "").rstrip("/")
+    openapi_url = root_path + app.openapi_url
+
+    return get_swagger_ui_html(
+        openapi_url=openapi_url,
+        title=app.title + " - Swagger UI",
+        swagger_js_url="https://api.innohassle.ru/swagger/swagger-ui-bundle.js",
+        swagger_css_url="https://api.innohassle.ru/swagger/swagger-ui.css",
+        swagger_favicon_url="https://api.innohassle.ru/swagger/favicon.png",
+    )
