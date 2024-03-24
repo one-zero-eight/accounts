@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Query
 from pydantic import BaseModel
 
-from src.api.dependencies import UserDep
+from src.api.dependencies import UserDep, AdminDep
 from src.exceptions import UserWithoutSessionException, NotEnoughPermissionsException
 from src.modules.tokens.repository import TokenRepository
 
@@ -33,23 +33,22 @@ async def generate_my_token(user: UserDep) -> TokenData:
     return TokenData(access_token=token)
 
 
-# @router.get(
-#     "/tokens/generate-access-token",
-#     responses={
-#         200: {"description": "Token"},
-#         **UserWithoutSessionException.responses,
-#         **NotEnoughPermissionsException.responses,
-#     },
-# )
-# async def generate_token(
-#     _user: AdminDep, sub: str, scope: str | None = Query(None, description="Space delimited list of scopes")
-# ) -> TokenData:
-#     """
-#     Generate access token with some sub in `sub` field
-#     """
-#     token = TokenRepository.create_access_token(sub, scope.split(" ") if scope else None)
-#     return TokenData(access_token=token)
-#
+@router.get(
+    "/tokens/generate-access-token",
+    responses={
+        200: {"description": "Token"},
+        **UserWithoutSessionException.responses,
+        **NotEnoughPermissionsException.responses,
+    },
+)
+async def generate_token(
+    _user: AdminDep, sub: str, scope: str | None = Query(None, description="Space delimited list of scopes")
+) -> TokenData:
+    """
+    Generate access token with some sub in `sub` field
+    """
+    token = TokenRepository.create_access_token(sub, scope.split(" ") if scope else None)
+    return TokenData(access_token=token)
 
 
 @router.get(
