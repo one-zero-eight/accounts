@@ -29,6 +29,8 @@ app = FastAPI(
     swagger_ui_parameters={"tryItOutEnabled": True, "persistAuthorization": True, "filter": True},
     generate_unique_id_function=docs.generate_unique_operation_id,
     lifespan=lifespan,
+    docs_url=None,
+    redoc_url=None,
 )
 
 app.add_middleware(
