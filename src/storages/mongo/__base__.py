@@ -1,51 +1,47 @@
-__all__ = ["CustomDocument", "CustomLink"]
+__all__ = ["CustomDocument"]
 
-from typing import Type, Any, TypeVar, get_args
+from typing import Annotated
 
-from beanie import Document, PydanticObjectId, Link
-from beanie.odm.registry import DocsRegistry
-from pydantic import Field, ConfigDict, GetCoreSchemaHandler
-from pydantic_core import CoreSchema, core_schema
+from beanie import Document, PydanticObjectId
+from pydantic import Field, ConfigDict, WithJsonSchema, GetJsonSchemaHandler
+from pydantic.json_schema import JsonSchemaValue
+from pydantic_core import CoreSchema
+
+MongoDbIdSchema = {
+    "type": "string",
+    "format": "objectid",
+    "example": "5eb7cf5a86d9755df3a6c593",
+}
+MongoDbId = Annotated[
+    PydanticObjectId,
+    WithJsonSchema(
+        MongoDbIdSchema,
+        mode="serialization",
+    ),
+]
 
 
 class CustomDocument(Document):
-    model_config = ConfigDict(json_schema_extra={})
+    model_config = ConfigDict(json_schema_serialization_defaults_required=True)
 
-    id: PydanticObjectId | None = Field(default=None, description="MongoDB document ObjectID", serialization_alias="id")
+    id: MongoDbId = Field(  # type: ignore[assignment]
+        default=None, description="MongoDB document ObjectID", serialization_alias="id"
+    )
 
     class Settings:
         keep_nulls = False
         max_nesting_depth = 1
 
-
-D = TypeVar("D", bound=Document)
-
-
-class CustomLink(Link[D]):
     @classmethod
-    def __get_pydantic_core_schema__(cls, source_type: Type[Any], handler: GetCoreSchemaHandler) -> CoreSchema:
-        document_class = DocsRegistry.evaluate_fr(get_args(source_type)[0])
-        document_class: Type[Document]
-
-        serialization_schema = core_schema.plain_serializer_function_ser_schema(
-            lambda instance: cls.serialize(instance),
-            return_schema=core_schema.union_schema(
-                [
-                    core_schema.typed_dict_schema(
-                        {
-                            "id": core_schema.typed_dict_field(core_schema.str_schema()),
-                            "collection": core_schema.typed_dict_field(core_schema.str_schema()),
-                        }
-                    ),
-                    document_class.__pydantic_core_schema__,
-                ],
-            ),
-        )
-
-        schema = core_schema.json_or_python_schema(
-            python_schema=core_schema.with_info_plain_validator_function(cls.build_validation(handler, source_type)),
-            json_schema=core_schema.with_default_schema(core_schema.str_schema(), default="5eb7cf5a86d9755df3a6c593"),
-            serialization=serialization_schema,
-        )
-
+    def __get_pydantic_json_schema__(
+        cls,
+        __core_schema: CoreSchema,
+        __handler: GetJsonSchemaHandler,
+    ) -> JsonSchemaValue:
+        schema = super().__get_pydantic_json_schema__(__core_schema, __handler)
+        if __handler.mode == "serialization":
+            if "required" in schema and "id" not in schema["required"]:
+                schema["required"].append("id")
+            if "required" not in schema:
+                schema["required"] = ["id"]
         return schema
