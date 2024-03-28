@@ -1,9 +1,16 @@
-from fastapi import APIRouter, Query
+from enum import StrEnum
+from typing import Annotated
+
+from authlib.jose import JWTClaims
+from beanie import PydanticObjectId
+from fastapi import APIRouter, Query, Security
 from pydantic import BaseModel
 
 from src.api.dependencies import UserDep, AdminDep
-from src.exceptions import UserWithoutSessionException, NotEnoughPermissionsException
+from src.exceptions import UserWithoutSessionException, NotEnoughPermissionsException, InvalidScope, ObjectNotFound
+from src.modules.tokens.dependencies import verify_access_token
 from src.modules.tokens.repository import TokenRepository
+from src.modules.users.repository import user_repository
 
 router = APIRouter(tags=["Tokens"])
 
@@ -51,8 +58,13 @@ async def generate_token(
     return TokenData(access_token=token)
 
 
+class AvailableScopes(StrEnum):
+    users = "users"
+    sport = "sport"
+
+
 @router.get(
-    "/tokens/generate-users-scope-service-token",
+    "/tokens/generate-service-token",
     responses={
         200: {"description": "Token"},
         **UserWithoutSessionException.responses,
@@ -60,10 +72,13 @@ async def generate_token(
     },
     response_model=TokenData,
 )
-async def generate_users_service_token(
+async def generate_service_token(
     user: UserDep,
     sub: str = Query(
-        ..., description="Some string that will be in `sub` field of JWT token. Actually, is may be anything."
+        ..., description="Some string that will be in `sub` field of JWT token. Actually, it may be anything."
+    ),
+    scopes: list[AvailableScopes] = Query(
+        ["users"], description="List of scopes that will be in `scope` field of JWT token. Default is ['users']"
     ),
     only_for_me: bool = Query(
         True,
@@ -73,11 +88,68 @@ async def generate_users_service_token(
     """
     Generate access token for access users-related endpoints (/users/*).
     """
-    if only_for_me:
-        token = TokenRepository.create_access_token(sub, ["users:{}".format(user.id)])
-        return TokenData(access_token=token)
-    elif user.is_admin:
-        token = TokenRepository.create_access_token(sub, ["users"])
-        return TokenData(access_token=token)
-    else:
+    _scopes = []
+
+    if not only_for_me and not user.is_admin:
         raise NotEnoughPermissionsException()
+
+    for scope in scopes:
+        if scope == AvailableScopes.users:
+            _scopes.append("users:{}".format(user.id) if only_for_me else "users")
+        elif scope == AvailableScopes.sport:
+            _scopes.append("sport:{}".format(user.id) if only_for_me else "sport")
+        else:
+            raise InvalidScope(f"Invalid scope: {scope}")
+
+    token = TokenRepository.create_access_token(sub, _scopes)
+    return TokenData(access_token=token)
+
+
+def _allowed_user_id_for_jwt_claims(user_id: PydanticObjectId, jwt_claims: JWTClaims) -> bool:
+    scope_string = jwt_claims.get("scope", "")
+    scopes = scope_string.split() if scope_string else []
+    sport_scopes = [scope for scope in scopes if scope.startswith("sport")]
+    if "sport" in sport_scopes:  # wildcard
+        return True
+
+    if f"sport:{user_id}" in sport_scopes:
+        return True
+
+    return False
+
+
+SportScopeDep = Annotated[JWTClaims, Security(verify_access_token, scopes=["sport"])]
+
+
+@router.get(
+    "/tokens/generate-sport-token",
+    responses={200: {"description": "Token"}, **NotEnoughPermissionsException.responses, **ObjectNotFound.responses},
+)
+async def generate_sport_token(
+    jwt_claims: SportScopeDep,
+    telegram_id: int | None = None,
+    innohassle_id: PydanticObjectId | None = None,
+    email: str | None = None,
+) -> TokenData:
+    """
+    Generate access token for access https://sport.innopolis.university/api/swagger/
+    """
+    for_user = None
+    if innohassle_id and for_user is None:
+        for_user = await user_repository.read(innohassle_id)
+    if telegram_id and for_user is None:
+        for_user = await user_repository.read_by_telegram_id(telegram_id)
+    if email and for_user is None:
+        for_user = await user_repository.read_by_innomail(email)
+
+    if for_user is None:
+        raise ObjectNotFound("User not found")
+
+    if not _allowed_user_id_for_jwt_claims(for_user.id, jwt_claims):
+        raise NotEnoughPermissionsException()
+
+    if not for_user.innopolis_sso:
+        raise ObjectNotFound("User without innopolis_sso email")
+
+    token = TokenRepository.create_sport_user_access_token(for_user.innopolis_sso.email)
+    return TokenData(access_token=token)

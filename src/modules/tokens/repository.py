@@ -4,22 +4,26 @@ from datetime import timedelta, datetime
 from typing import Any
 
 from authlib.jose import jwt, JsonWebKey
+from beanie import PydanticObjectId
 
 from src.config import settings
-from beanie import PydanticObjectId
 
 
 class TokenRepository:
     ALGORITHM = "RS256"
 
     @classmethod
-    def _create_token(cls, data: dict, expires_delta: timedelta, scopes: list[str] | None = None) -> str:
+    def _create_token(
+        cls, data: dict, expires_delta: timedelta, scopes: list[str] | None = None, aud: str | None = None
+    ) -> str:
         payload = data.copy()
         issued_at = datetime.utcnow()
         expire = issued_at + expires_delta
         payload.update({"exp": expire, "iat": issued_at})
         if scopes:
             payload["scope"] = " ".join(scopes)
+        if aud:
+            payload["aud"] = aud
         encoded_jwt = jwt.encode({"alg": cls.ALGORITHM}, payload, settings.auth.jwt_private_key.get_secret_value())
         return str(encoded_jwt, "utf-8")
 
@@ -33,6 +37,12 @@ class TokenRepository:
     def create_user_access_token(cls, user_id: PydanticObjectId) -> str:
         data = {"uid": str(user_id)}
         access_token = TokenRepository._create_token(data=data, expires_delta=timedelta(days=1), scopes=["me"])
+        return access_token
+
+    @classmethod
+    def create_sport_user_access_token(cls, email: str) -> str:
+        data = {"email": email}
+        access_token = TokenRepository._create_token(data=data, expires_delta=timedelta(days=1), aud="sport")
         return access_token
 
     @classmethod

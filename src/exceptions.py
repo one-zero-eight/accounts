@@ -58,6 +58,20 @@ class InvalidTelegramWidgetHash(HTTPException):
     responses = {400: {"description": "Invalid Telegram widget hash"}}
 
 
+class InvalidScope(HTTPException):
+    """
+    HTTP_400_BAD_REQUEST
+    """
+
+    def __init__(self, detail: str | None = None) -> None:
+        super().__init__(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=detail or self.responses[400]["description"],
+        )
+
+    responses = {400: {"description": "Invalid scope"}}
+
+
 class ObjectNotFound(HTTPException):
     """
     HTTP_404_NOT_FOUND
