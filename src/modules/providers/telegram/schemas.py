@@ -16,7 +16,8 @@ class TelegramWidgetData(BaseModel):
 
     @property
     def string_to_hash(self) -> str:
-        return "\n".join([f"{k}={getattr(self, k)}" for k in sorted(self.model_fields.keys()) if k != "hash"])
+        not_null_fields = self.model_dump(exclude_none=True, exclude={"hash"})
+        return "\n".join([f"{k}={not_null_fields[k]}" for k in sorted(not_null_fields.keys())])
 
     @property
     def encoded(self) -> bytes:
