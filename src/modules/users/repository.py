@@ -1,8 +1,8 @@
+from beanie import PydanticObjectId, UpdateResponse
 from beanie.odm.operators.update.general import Set
 
 from src.modules.providers.innopolis.schemas import UserInfoFromSSO
 from src.modules.providers.telegram.schemas import TelegramWidgetData
-from beanie import PydanticObjectId, UpdateResponse
 from src.storages.mongo.models import User
 
 
@@ -40,6 +40,19 @@ class UserRepository:
 
     async def read_by_innomail(self, email: str) -> User | None:
         user = await User.find_one(User.innopolis_sso.email == email)
+        return user
+
+    async def wild_read(
+        self, user_id: PydanticObjectId | None, telegram_id: int | None, email: str | None
+    ) -> User | None:
+        predicates = []
+        if user_id is not None:
+            predicates.append(User.id == user_id)
+        if telegram_id is not None:
+            predicates.append(User.telegram.id == telegram_id)
+        if email is not None:
+            predicates.append(User.innopolis_sso.email == email)
+        user = await User.find_one(*predicates)
         return user
 
 

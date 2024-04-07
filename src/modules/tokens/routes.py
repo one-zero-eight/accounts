@@ -134,13 +134,10 @@ async def generate_sport_token(
     """
     Generate access token for access https://sport.innopolis.university/api/swagger/
     """
-    for_user = None
-    if innohassle_id and for_user is None:
-        for_user = await user_repository.read(innohassle_id)
-    if telegram_id and for_user is None:
-        for_user = await user_repository.read_by_telegram_id(telegram_id)
-    if email and for_user is None:
-        for_user = await user_repository.read_by_innomail(email)
+    if not any([telegram_id, innohassle_id, email]):
+        raise ObjectNotFound("User not found")
+
+    for_user = await user_repository.wild_read(telegram_id=telegram_id, user_id=innohassle_id, email=email)
 
     if for_user is None:
         raise ObjectNotFound("User not found")
