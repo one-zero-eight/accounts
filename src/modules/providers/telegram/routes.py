@@ -1,5 +1,6 @@
 __all__ = ["router"]
 
+import datetime
 import hashlib
 import hmac
 
@@ -8,8 +9,9 @@ from fastapi import APIRouter, Request
 from src.api.dependencies import UserIdDep, OptionalUserIdDep
 from src.config import settings
 from src.exceptions import InvalidTelegramWidgetHash, UserWithoutSessionException
-from src.modules.users.repository import user_repository
 from src.modules.providers.telegram.schemas import TelegramWidgetData, TelegramLoginResponse
+from src.modules.users.repository import user_repository
+from src.utils import aware_utcnow
 
 router = APIRouter(prefix="/telegram")
 
@@ -29,6 +31,11 @@ def validate_widget_hash(telegram_data: TelegramWidgetData) -> bool:
     received_hash = telegram_data.hash
     encoded_telegarm_data = telegram_data.encoded
     evaluated_hash = hmac.new(_get_secret_key(), encoded_telegarm_data, hashlib.sha256).hexdigest()
+    # check date
+    _now = aware_utcnow()
+    _auth_date = datetime.datetime.utcfromtimestamp(telegram_data.auth_date)
+    if _now - datetime.timedelta(minutes=5) > _auth_date > _now + datetime.timedelta(minutes=5):
+        return False
     return evaluated_hash == received_hash
 
 
