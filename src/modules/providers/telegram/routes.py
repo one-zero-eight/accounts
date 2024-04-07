@@ -32,7 +32,7 @@ def validate_widget_hash(telegram_data: TelegramWidgetData) -> bool:
     evaluated_hash = hmac.new(_get_secret_key(), encoded_telegarm_data, hashlib.sha256).hexdigest()
     # check date
     _now = aware_utcnow().timestamp()
-    if _now - 5 * 60 > telegram_data.auth_date > _now + 5 * 60:
+    if _now - 5 * 60 < telegram_data.auth_date < _now + 5 * 60:
         return False
     return evaluated_hash == received_hash
 
