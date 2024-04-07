@@ -33,8 +33,8 @@ def validate_widget_hash(telegram_data: TelegramWidgetData) -> bool:
     # check date
     _now = aware_utcnow().timestamp()
     if _now - 5 * 60 < telegram_data.auth_date < _now + 5 * 60:
-        return False
-    return evaluated_hash == received_hash
+        return evaluated_hash == received_hash
+    return False
 
 
 if settings.telegram:
