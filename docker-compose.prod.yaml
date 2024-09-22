@@ -4,8 +4,6 @@
 # Run all services:
 # docker compose -f docker-compose.yaml -f docker-compose.prod.yaml up --pull always --detach
 
-version: "3"
-
 # Override the default settings for production
 services:
   api:
