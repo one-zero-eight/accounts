@@ -20,7 +20,7 @@ auth:
     sssssssssss
     -----END PUBLIC KEY-----
 mongo:
-  uri: mongodb://user:password@localhost:27017/db?authSource=admin
+  uri: mongodb://mongoadmin:secret@localhost:27017/db?authSource=admin
 telegram:
   bot_token: <bot_token>
   bot_username: <bot_username>
