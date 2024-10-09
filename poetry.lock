@@ -327,6 +327,20 @@ all = ["email-validator (>=2.0.0)", "fastapi-cli[standard] (>=0.0.5)", "httpx (>
 standard = ["email-validator (>=2.0.0)", "fastapi-cli[standard] (>=0.0.5)", "httpx (>=0.23.0)", "jinja2 (>=2.11.2)", "python-multipart (>=0.0.7)", "uvicorn[standard] (>=0.12.0)"]
 
 [[package]]
+name = "fastapi-swagger"
+version = "0.2.3"
+description = "This plugin updates the FastAPI app to host latest Swagger UI distribution."
+optional = false
+python-versions = "<4.0,>=3.10"
+files = [
+    {file = "fastapi_swagger-0.2.3-py3-none-any.whl", hash = "sha256:4fc0bde78c282f6ae047e2d937ad4c38017638a2650c03361758d93421cdda34"},
+    {file = "fastapi_swagger-0.2.3.tar.gz", hash = "sha256:383b15d65a180883066834afcc3932be712e3b1fe2a5f3c3309330f208406b52"},
+]
+
+[package.dependencies]
+fastapi = ">=0.100"
+
+[[package]]
 name = "filelock"
 version = "3.16.1"
 description = "A platform independent file lock."
@@ -961,4 +975,4 @@ test = ["covdefaults (>=2.3)", "coverage (>=7.2.7)", "coverage-enable-subprocess
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "ec71d6bf1e3a3ba8bbec11ab08f17aa053fe2762b2501badfcf258082cb0a1ad"
+content-hash = "b927fce3fc69bce791a5305f5ad0db847e35a893e179b064fd384dbf539d3fc3"
