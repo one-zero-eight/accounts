@@ -8,7 +8,6 @@ from starlette.middleware.sessions import SessionMiddleware
 import src.logging_  # noqa: F401
 from src.api import docs
 from src.api.lifespan import lifespan
-from src.api.routers import routers
 from src.config import settings
 from src.config_schema import Environment
 
@@ -51,8 +50,15 @@ app.add_middleware(
     domain=None,
 )
 
-for router in routers:
-    app.include_router(router)
+from src.modules.providers.routes import router as router_providers  # noqa: E402
+from src.modules.users.routes import router as router_users  # noqa: E402
+from src.modules.tokens.routes import router as router_tokens  # noqa: E402
+from src.modules.logout import router as router_logout  # noqa: E402
+
+app.include_router(router_providers)
+app.include_router(router_users)
+app.include_router(router_tokens)
+app.include_router(router_logout)
 
 
 # Redirect root to docs
