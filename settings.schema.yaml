@@ -8,19 +8,26 @@ $defs:
         - localhost
         - 127.0.0.1
         - 0.0.0.0
+        description: Allowed domains for redirecting after authentication
         items:
           type: string
         title: Allowed Domains
         type: array
       jwt_private_key:
+        description: Private key for JWT. Use 'openssl genrsa -out private.pem 2048'
+          to generate keys
         format: password
         title: Jwt Private Key
         type: string
         writeOnly: true
       jwt_public_key:
+        description: Public key for JWT. Use 'openssl rsa -in private.pem -pubout
+          -out public.pem' to generate keys
         title: Jwt Public Key
         type: string
       session_secret_key:
+        description: Secret key for sessions. Use 'openssl rand -hex 32' to generate
+          keys
         format: password
         title: Session Secret Key
         type: string
@@ -44,9 +51,11 @@ $defs:
       development
     properties:
       api_url:
+        description: API URL for InNoHassle-Accounts
         title: Api Url
         type: string
       api_jwt_token:
+        description: JWT token for accessing the Accounts API as a service
         format: password
         title: Api Jwt Token
         type: string
@@ -61,14 +70,17 @@ $defs:
     description: Innopolis SSO settings (only for production)
     properties:
       client_id:
+        description: Client ID for Innopolis SSO
         title: Client Id
         type: string
       client_secret:
+        description: Client secret for Innopolis SSO
         format: password
         title: Client Secret
         type: string
         writeOnly: true
       redirect_uri:
+        description: Redirect URI for Innopolis SSO
         title: Redirect Uri
         type: string
       resource_id:
@@ -76,6 +88,8 @@ $defs:
         - type: string
         - type: 'null'
         default: null
+        description: Resource ID for Innopolis SSO (optional); Used for Sports API
+          access
         title: Resource Id
     required:
     - client_id
@@ -87,6 +101,7 @@ $defs:
     additionalProperties: false
     properties:
       uri:
+        description: MongoDB database connection URI
         format: password
         title: Uri
         type: string
@@ -99,16 +114,20 @@ $defs:
     additionalProperties: false
     properties:
       host:
+        description: SMTP server host
         title: Host
         type: string
       port:
         default: 587
+        description: SMTP server port
         title: Port
         type: integer
       username:
+        description: SMTP server username
         title: Username
         type: string
       password:
+        description: SMTP server password
         format: password
         title: Password
         type: string
@@ -123,9 +142,11 @@ $defs:
     additionalProperties: false
     properties:
       bot_username:
+        description: Bot username for Telegram
         title: Bot Username
         type: string
       bot_token:
+        description: Bot token for Telegram
         format: password
         title: Bot Token
         type: string
@@ -140,15 +161,18 @@ description: Settings for the application. Get settings from `settings.yaml` fil
 properties:
   app_root_path:
     default: ''
+    description: Prefix for the API path (e.g. '/api/v0')
     title: App Root Path
     type: string
   environment:
-    allOf:
-    - $ref: '#/$defs/Environment'
+    $ref: '#/$defs/Environment'
     default: development
+    description: App environment
   mongo:
     $ref: '#/$defs/Mongo'
+    description: MongoDB settings
   web_url:
+    description: Web URL for the frontend part of InNoHassle-Accounts
     title: Web Url
     type: string
   cors_allow_origins:
@@ -156,32 +180,39 @@ properties:
     - https://innohassle.ru
     - https://pre.innohassle.ru
     - http://localhost:3000
+    description: 'Allowed origins for CORS: from which domains requests to the API
+      are allowed'
     items:
       type: string
     title: Cors Allow Origins
     type: array
   auth:
     $ref: '#/$defs/Authentication'
+    description: Authentication settings
   innopolis_sso:
     anyOf:
     - $ref: '#/$defs/InnopolisSSO'
     - type: 'null'
     default: null
+    description: Innopolis SSO settings (only for production)
   telegram:
     anyOf:
     - $ref: '#/$defs/Telegram'
     - type: 'null'
     default: null
+    description: Telegram settings
   innohassle_accounts:
     anyOf:
     - $ref: '#/$defs/InNoHassleAccounts'
     - type: 'null'
     default: null
+    description: InNoHassle-Accounts settings
   smtp:
     anyOf:
     - $ref: '#/$defs/SMTP'
     - type: 'null'
     default: null
+    description: SMTP settings
   $schema:
     description: Path to the schema file
     title: Schema
