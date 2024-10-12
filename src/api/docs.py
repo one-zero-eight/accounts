@@ -17,13 +17,15 @@ DESCRIPTION = """
 
 This is the API for Accounts project in InNoHassle ecosystem developed by one-zero-eight community.
 
+Using this API you can manage user accounts and receive access tokens for other APIs.
+
 Backend is developed using FastAPI framework on Python.
 
 Note: API is unstable. Endpoints and models may change in the future.
 
 Useful links:
-- [Frontend source code](https://github.com/one-zero-eight/InNoHassle-Website)
-- [Website](https://innohassle.ru/)
+- [Accounts API source code](https://github.com/one-zero-eight/accounts)
+- [InNoHassle Website](https://innohassle.ru/)
 """
 
 CONTACT_INFO = {
@@ -39,6 +41,18 @@ TAGS_INFO = [
     {
         "name": "Users",
         "description": "User data and linking users with event groups.",
+    },
+    {
+        "name": "Tokens",
+        "description": (
+            "Generate access tokens to call other APIs. "
+            "'My token' is for frontend which can access any API from the name of user. "
+            "'Service tokens' are for backend programs which can access data of multiple users."
+        ),
+    },
+    {
+        "name": "Providers",
+        "description": "Providers for authentication or connectors of social accounts.",
     },
 ]
 
