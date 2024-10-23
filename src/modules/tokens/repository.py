@@ -1,9 +1,9 @@
 __all__ = ["TokenRepository"]
 
-from datetime import timedelta, datetime
+from datetime import datetime, timedelta
 from typing import Any
 
-from authlib.jose import jwt, JsonWebKey
+from authlib.jose import JsonWebKey, jwt
 from beanie import PydanticObjectId
 
 from src.config import settings

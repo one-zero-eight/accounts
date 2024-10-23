@@ -8,7 +8,7 @@ from authlib.integrations.starlette_client import OAuth
 from fastapi import APIRouter
 from starlette.datastructures import URL
 from starlette.requests import Request
-from starlette.responses import RedirectResponse, JSONResponse
+from starlette.responses import JSONResponse, RedirectResponse
 
 from src.config import settings
 from src.exceptions import InvalidReturnToURL

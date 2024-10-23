@@ -2,14 +2,14 @@ __all__ = ["router"]
 
 from typing import Annotated
 
+from beanie import PydanticObjectId
 from fastapi import APIRouter, Body
-from pydantic import EmailStr, BaseModel
+from pydantic import BaseModel, EmailStr
 
 from src.api.dependencies import UserIdDep
 from src.config import settings
 from src.modules.providers.email.repository import EmailFlowVerificationStatus, email_flow_repository
 from src.modules.tokens.repository import TokenRepository
-from beanie import PydanticObjectId
 
 router = APIRouter(prefix="/email")
 

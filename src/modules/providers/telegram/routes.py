@@ -5,10 +5,10 @@ import hmac
 
 from fastapi import APIRouter, Request
 
-from src.api.dependencies import UserIdDep, OptionalUserIdDep
+from src.api.dependencies import OptionalUserIdDep, UserIdDep
 from src.config import settings
 from src.exceptions import InvalidTelegramWidgetHash, UserWithoutSessionException
-from src.modules.providers.telegram.schemas import TelegramWidgetData, TelegramLoginResponse
+from src.modules.providers.telegram.schemas import TelegramLoginResponse, TelegramWidgetData
 from src.modules.users.repository import user_repository
 from src.utils import aware_utcnow
 

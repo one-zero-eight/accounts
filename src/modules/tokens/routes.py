@@ -6,8 +6,8 @@ from beanie import PydanticObjectId
 from fastapi import APIRouter, Query, Security
 from pydantic import BaseModel
 
-from src.api.dependencies import UserDep, AdminDep
-from src.exceptions import UserWithoutSessionException, NotEnoughPermissionsException, InvalidScope, ObjectNotFound
+from src.api.dependencies import AdminDep, UserDep
+from src.exceptions import InvalidScope, NotEnoughPermissionsException, ObjectNotFound, UserWithoutSessionException
 from src.modules.tokens.dependencies import verify_access_token
 from src.modules.tokens.repository import TokenRepository
 from src.modules.users.repository import user_repository
@@ -95,9 +95,9 @@ async def generate_service_token(
 
     for scope in scopes:
         if scope == AvailableScopes.users:
-            _scopes.append("users:{}".format(user.id) if only_for_me else "users")
+            _scopes.append(f"users:{user.id}" if only_for_me else "users")
         elif scope == AvailableScopes.sport:
-            _scopes.append("sport:{}".format(user.id) if only_for_me else "sport")
+            _scopes.append(f"sport:{user.id}" if only_for_me else "sport")
         else:
             raise InvalidScope(f"Invalid scope: {scope}")
 

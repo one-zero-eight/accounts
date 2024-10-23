@@ -1,12 +1,13 @@
 __all__ = ["UserIdDep", "OptionalUserIdDep", "UserDep", "AdminDep"]
 
 from typing import Annotated
-from fastapi import Request, Depends
 
-from src.exceptions import UserWithoutSessionException, NotEnoughPermissionsException
+from beanie import PydanticObjectId
+from fastapi import Depends, Request
+
+from src.exceptions import NotEnoughPermissionsException, UserWithoutSessionException
 from src.modules.users.repository import user_repository
 from src.storages.mongo.models import User
-from beanie import PydanticObjectId
 
 
 async def _get_uid_from_session(request: Request) -> PydanticObjectId:

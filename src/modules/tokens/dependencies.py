@@ -1,6 +1,6 @@
-from authlib.jose import jwt, JoseError, JWTClaims
-from fastapi import HTTPException, Depends
-from fastapi.security import SecurityScopes, HTTPAuthorizationCredentials, HTTPBearer
+from authlib.jose import JoseError, JWTClaims, jwt
+from fastapi import Depends, HTTPException
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer, SecurityScopes
 from starlette import status
 
 from src.config import settings

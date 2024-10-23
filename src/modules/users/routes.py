@@ -5,8 +5,8 @@ from beanie import PydanticObjectId
 from fastapi import APIRouter, Request, Security
 
 from src.api.dependencies import UserIdDep
-from src.exceptions import UserWithoutSessionException, ObjectNotFound
-from src.modules.tokens.dependencies import verify_access_token_responses, verify_access_token
+from src.exceptions import ObjectNotFound, UserWithoutSessionException
+from src.modules.tokens.dependencies import verify_access_token, verify_access_token_responses
 from src.modules.users.repository import user_repository
 from src.storages.mongo.models import User
 

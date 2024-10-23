@@ -2,10 +2,10 @@ import datetime
 import random
 from enum import StrEnum
 
+from beanie import PydanticObjectId
 from beanie.odm.operators.update.general import Set
 from pydantic import BaseModel
 
-from beanie import PydanticObjectId
 from src.storages.mongo.models import EmailFlow
 
 

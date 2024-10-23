@@ -7,7 +7,7 @@ from email.mime.text import MIMEText
 from pathlib import Path
 from typing import Generator
 
-from email_validator import validate_email, EmailNotValidError
+from email_validator import EmailNotValidError, validate_email
 
 from src.config import settings
 
