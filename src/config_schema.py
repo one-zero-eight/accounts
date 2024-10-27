@@ -38,11 +38,11 @@ class Telegram(SettingsEntityModel):
 
 class InNoHassleAccounts(SettingsEntityModel):
     """
-    Use production InNoHassle-Accounts API for authentication in local development
+    Use production InNoHassle Accounts API for authentication in local development
     """
 
-    api_url: str
-    "API URL for InNoHassle-Accounts"
+    api_url: str = "https://api.innohassle.ru/accounts/v0"
+    "API URL for InNoHassle Accounts"
     api_jwt_token: SecretStr
     "JWT token for accessing the Accounts API as a service"
 
@@ -111,7 +111,7 @@ class Settings(SettingsEntityModel):
     @classmethod
     def save_schema(cls, path: Path) -> None:
         with open(path, "w", encoding="utf-8") as f:
-            schema = {"$schema": "https://json-schema.org/draft-07/schema#", **cls.model_json_schema()}
+            schema = {"$schema": "https://json-schema.org/draft-07/schema", **cls.model_json_schema()}
             schema["properties"]["$schema"] = {
                 "description": "Path to the schema file",
                 "title": "Schema",
