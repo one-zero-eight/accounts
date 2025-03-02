@@ -5,9 +5,9 @@ from typing import Any
 
 from authlib.jose import JsonWebKey, jwt
 from beanie import PydanticObjectId
-
+from src.storages.mongo.models import User
 from src.config import settings
-
+from typing import Dict, Optional
 
 class TokenRepository:
     ALGORITHM = "RS256"
@@ -28,14 +28,25 @@ class TokenRepository:
         return str(encoded_jwt, "utf-8")
 
     @classmethod
+    def _add_user_payload(cls, user: User, data: Dict[str,Any] = {}) -> Dict[str, Any]:
+        if user.innopolis_sso:
+            data.update({"email": user.innopolis_sso.email})
+        if user.telegram:
+            data.update({"telegram_id": user.telegram.id})
+        return data
+
+    @classmethod
     def create_access_token(cls, sub: Any, scopes: list[str] | None) -> str:
         data = {"sub": str(sub)}
         access_token = TokenRepository._create_token(data=data, expires_delta=timedelta(days=90), scopes=scopes)
         return access_token
 
     @classmethod
-    def create_user_access_token(cls, user_id: PydanticObjectId) -> str:
-        data = {"uid": str(user_id)}
+    def create_user_access_token(cls, user: User) -> str:
+        data =  TokenRepository._add_user_payload(
+            user,
+            data={"uid": str(user.id)}
+        )
         access_token = TokenRepository._create_token(data=data, expires_delta=timedelta(days=1), scopes=["me"])
         return access_token
 

@@ -36,7 +36,7 @@ async def generate_my_token(user: UserDep) -> TokenData:
     """
     Generate access token for current user with user id in `uid` field
     """
-    token = TokenRepository.create_user_access_token(user.id)
+    token = TokenRepository.create_user_access_token(user)
     return TokenData(access_token=token)
 
 
