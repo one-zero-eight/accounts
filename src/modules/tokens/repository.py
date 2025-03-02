@@ -1,7 +1,7 @@
 __all__ = ["TokenRepository"]
 
 from datetime import datetime, timedelta
-from typing import Any, Dict
+from typing import Any
 
 from authlib.jose import JsonWebKey, jwt
 from beanie import PydanticObjectId
@@ -29,7 +29,7 @@ class TokenRepository:
         return str(encoded_jwt, "utf-8")
 
     @classmethod
-    def _add_user_payload(cls, user: User, data: Dict[str, Any] = {}) -> Dict[str, Any]:
+    def _add_user_payload(cls, user: User, data: dict = {}) -> dict:
         if user.innopolis_sso:
             data.update({"email": user.innopolis_sso.email})
         if user.telegram:
