@@ -1,4 +1,4 @@
-$schema: https://json-schema.org/draft-07/schema#
+$schema: https://json-schema.org/draft-07/schema
 $defs:
   Authentication:
     additionalProperties: false
@@ -47,11 +47,12 @@ $defs:
     type: string
   InNoHassleAccounts:
     additionalProperties: false
-    description: Use production InNoHassle-Accounts API for authentication in local
+    description: Use production InNoHassle Accounts API for authentication in local
       development
     properties:
       api_url:
-        description: API URL for InNoHassle-Accounts
+        default: https://api.innohassle.ru/accounts/v0
+        description: API URL for InNoHassle Accounts
         title: Api Url
         type: string
       api_jwt_token:
@@ -61,7 +62,6 @@ $defs:
         type: string
         writeOnly: true
     required:
-    - api_url
     - api_jwt_token
     title: InNoHassleAccounts
     type: object
