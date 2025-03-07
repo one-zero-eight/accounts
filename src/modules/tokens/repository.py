@@ -29,7 +29,9 @@ class TokenRepository:
         return str(encoded_jwt, "utf-8")
 
     @classmethod
-    def _add_user_payload(cls, user: User, data: dict = {}) -> dict:
+    def _add_user_payload(cls, user: User, data: dict = None) -> dict:
+        if data is None:
+            data = {}
         if user.innopolis_sso:
             data.update({"email": user.innopolis_sso.email})
         if user.telegram:
