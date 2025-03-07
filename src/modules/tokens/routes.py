@@ -150,3 +150,18 @@ async def generate_sport_token(
 
     token = TokenRepository.create_sport_user_access_token(for_user.innopolis_sso.email)
     return TokenData(access_token=token)
+
+
+@router.get(
+    "/tokens/generate-my-sport-token",
+    responses={200: {"description": "Token"}, **UserWithoutSessionException.responses},
+)
+async def generate_my_sport_token(user: UserDep) -> TokenData:
+    """
+    Generate access token for current user for access https://sport.innopolis.university/api/swagger/
+    """
+    if not user.innopolis_sso:
+        raise ObjectNotFound("User without innopolis_sso email")
+
+    token = TokenRepository.create_sport_user_access_token(user.innopolis_sso.email)
+    return TokenData(access_token=token)
