@@ -17,6 +17,7 @@ class UserInfoFromSSO(BaseModel):
     issued_at: datetime.datetime | None = None
     is_student: bool = False
     is_staff: bool = False
+    group: str | None = None
 
     @classmethod
     def from_token_and_userinfo(cls, token: dict, userinfo: dict) -> "UserInfoFromSSO":
@@ -45,4 +46,5 @@ class UserInfoFromSSO(BaseModel):
             expires_at=token["expires_at"],
             is_student=is_student,
             is_staff=is_staff,
+            group=userinfo.get("group"),
         )
