@@ -2,10 +2,10 @@ __all__ = ["SMTPRepository", "smtp_repository"]
 
 import contextlib
 import smtplib
+from collections.abc import Generator
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from pathlib import Path
-from typing import Generator
 
 from email_validator import EmailNotValidError, validate_email
 
