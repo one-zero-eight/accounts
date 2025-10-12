@@ -1,5 +1,24 @@
 $schema: https://json-schema.org/draft-07/schema
 $defs:
+  Accounts:
+    additionalProperties: false
+    description: InNoHassle Accounts integration settings
+    properties:
+      api_url:
+        default: https://api.innohassle.ru/accounts/v0
+        description: API URL for InNoHassle Accounts
+        title: Api Url
+        type: string
+      api_jwt_token:
+        description: JWT token for accessing the Accounts API as a service
+        format: password
+        title: Api Jwt Token
+        type: string
+        writeOnly: true
+    required:
+    - api_jwt_token
+    title: Accounts
+    type: object
   Authentication:
     additionalProperties: false
     properties:
@@ -45,26 +64,6 @@ $defs:
     - testing
     title: Environment
     type: string
-  InNoHassleAccounts:
-    additionalProperties: false
-    description: Use production InNoHassle Accounts API for authentication in local
-      development
-    properties:
-      api_url:
-        default: https://api.innohassle.ru/accounts/v0
-        description: API URL for InNoHassle Accounts
-        title: Api Url
-        type: string
-      api_jwt_token:
-        description: JWT token for accessing the Accounts API as a service
-        format: password
-        title: Api Jwt Token
-        type: string
-        writeOnly: true
-    required:
-    - api_jwt_token
-    title: InNoHassleAccounts
-    type: object
   InnopolisSSO:
     additionalProperties: false
     description: Innopolis SSO settings (only for production)
@@ -201,12 +200,13 @@ properties:
     - type: 'null'
     default: null
     description: Telegram settings
-  innohassle_accounts:
+  accounts:
     anyOf:
-    - $ref: '#/$defs/InNoHassleAccounts'
+    - $ref: '#/$defs/Accounts'
     - type: 'null'
     default: null
-    description: InNoHassle-Accounts settings
+    description: Use production InNoHassle Accounts API for authentication in local
+      development
   smtp:
     anyOf:
     - $ref: '#/$defs/SMTP'

@@ -1,6 +1,5 @@
 from enum import StrEnum
 from pathlib import Path
-from typing import Optional
 
 import yaml
 from pydantic import BaseModel, ConfigDict, SecretStr
@@ -25,7 +24,7 @@ class InnopolisSSO(SettingsEntityModel):
     "Client secret for Innopolis SSO"
     redirect_uri: str
     "Redirect URI for Innopolis SSO"
-    resource_id: Optional[str] = None
+    resource_id: str | None = None
     "Resource ID for Innopolis SSO (optional); Used for Sports API access"
 
 
@@ -36,10 +35,8 @@ class Telegram(SettingsEntityModel):
     "Bot token for Telegram"
 
 
-class InNoHassleAccounts(SettingsEntityModel):
-    """
-    Use production InNoHassle Accounts API for authentication in local development
-    """
+class Accounts(SettingsEntityModel):
+    """InNoHassle Accounts integration settings"""
 
     api_url: str = "https://api.innohassle.ru/accounts/v0"
     "API URL for InNoHassle Accounts"
@@ -91,13 +88,13 @@ class Settings(SettingsEntityModel):
     "Allowed origins for CORS: from which domains requests to the API are allowed"
     auth: Authentication
     "Authentication settings"
-    innopolis_sso: Optional[InnopolisSSO] = None
+    innopolis_sso: InnopolisSSO | None = None
     "Innopolis SSO settings (only for production)"
-    telegram: Optional[Telegram] = None
+    telegram: Telegram | None = None
     "Telegram settings"
-    innohassle_accounts: Optional[InNoHassleAccounts] = None
-    "InNoHassle-Accounts settings"
-    smtp: Optional[SMTP] = None
+    accounts: Accounts | None = None
+    "Use production InNoHassle Accounts API for authentication in local development"
+    smtp: SMTP | None = None
     "SMTP settings"
 
     @classmethod

@@ -1,3 +1,9 @@
+"""
+Generate access tokens to call other APIs. 'My token' is for frontend which can access any API from the name of user. 'Service tokens' are for backend programs which can access data of multiple users.
+
+You can analyze JWT token at [jwt.io](https://jwt.io/).
+"""
+
 from enum import StrEnum
 from typing import Annotated
 
@@ -6,6 +12,7 @@ from beanie import PydanticObjectId
 from fastapi import APIRouter, Query, Security
 from pydantic import BaseModel
 
+from src.api import docs
 from src.api.dependencies import AdminDep, UserDep
 from src.exceptions import InvalidScope, NotEnoughPermissionsException, ObjectNotFound, UserWithoutSessionException
 from src.modules.tokens.dependencies import verify_access_token
@@ -13,6 +20,7 @@ from src.modules.tokens.repository import TokenRepository
 from src.modules.users.repository import user_repository
 
 router = APIRouter(tags=["Tokens"])
+docs.TAGS_INFO.append({"description": __doc__, "name": str(router.tags[0])})
 
 
 class TokenData(BaseModel):
@@ -30,31 +38,27 @@ async def get_jwks():
 @router.get(
     "/tokens/generate-my-token",
     responses={200: {"description": "Token"}, **UserWithoutSessionException.responses},
-    response_model=TokenData,
 )
 async def generate_my_token(user: UserDep) -> TokenData:
     """
-    Generate access token for current user with user id in `uid` field
+    Generate access token for current user with user id in `uid` field and other info if present, expires in 1 day
     """
     token = TokenRepository.create_user_access_token(user)
     return TokenData(access_token=token)
 
 
 @router.get(
-    "/tokens/generate-access-token",
-    responses={
-        200: {"description": "Token"},
-        **UserWithoutSessionException.responses,
-        **NotEnoughPermissionsException.responses,
-    },
+    "/tokens/generate-my-sport-token",
+    responses={200: {"description": "Token"}, **UserWithoutSessionException.responses},
 )
-async def generate_token(
-    _user: AdminDep, sub: str, scope: str | None = Query(None, description="Space delimited list of scopes")
-) -> TokenData:
+async def generate_my_sport_token(user: UserDep) -> TokenData:
     """
-    Generate access token with some sub in `sub` field
+    Generate access token for current user for access [https://sport.innopolis.university/api/swagger/](https://sport.innopolis.university/api/swagger/), expires in 1 day
     """
-    token = TokenRepository.create_access_token(sub, scope.split(" ") if scope else None)
+    if not user.innopolis_sso:
+        raise ObjectNotFound("User without innopolis_sso email")
+
+    token = TokenRepository.create_sport_user_access_token(user.innopolis_sso.email)
     return TokenData(access_token=token)
 
 
@@ -86,7 +90,7 @@ async def generate_service_token(
     ),
 ) -> TokenData:
     """
-    Generate access token for access users-related endpoints (/users/*).
+    Generate access token for access users-related endpoints (/users/*), expires in 90 days
     """
     _scopes = []
 
@@ -132,7 +136,7 @@ async def generate_sport_token(
     email: str | None = None,
 ) -> TokenData:
     """
-    Generate access token for access https://sport.innopolis.university/api/swagger/
+    Generate access token for access [https://sport.innopolis.university/api/swagger/](https://sport.innopolis.university/api/swagger/) on behalf of provided user, will have aud="sport", expires in 1 day
     """
     if not any([telegram_id, innohassle_id, email]):
         raise ObjectNotFound("User not found")
@@ -153,15 +157,20 @@ async def generate_sport_token(
 
 
 @router.get(
-    "/tokens/generate-my-sport-token",
-    responses={200: {"description": "Token"}, **UserWithoutSessionException.responses},
+    "/tokens/generate-access-token",
+    responses={
+        200: {"description": "Token"},
+        **UserWithoutSessionException.responses,
+        **NotEnoughPermissionsException.responses,
+    },
 )
-async def generate_my_sport_token(user: UserDep) -> TokenData:
+async def generate_token(
+    _user: AdminDep,
+    sub: str = Query(examples=["parser"]),
+    scope: str | None = Query(None, description="Space delimited list of scopes"),
+) -> TokenData:
     """
-    Generate access token for current user for access https://sport.innopolis.university/api/swagger/
+    Generate arbitrary access token with some sub in `sub` field (f.e. parser), expires in 90 days, only for admins
     """
-    if not user.innopolis_sso:
-        raise ObjectNotFound("User without innopolis_sso email")
-
-    token = TokenRepository.create_sport_user_access_token(user.innopolis_sso.email)
+    token = TokenRepository.create_access_token(sub, scope.split(" ") if scope else None)
     return TokenData(access_token=token)

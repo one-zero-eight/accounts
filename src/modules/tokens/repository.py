@@ -1,6 +1,6 @@
 __all__ = ["TokenRepository"]
 
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from authlib.jose import JsonWebKey, jwt
@@ -18,7 +18,7 @@ class TokenRepository:
         cls, data: dict, expires_delta: timedelta, scopes: list[str] | None = None, aud: str | None = None
     ) -> str:
         payload = data.copy()
-        issued_at = datetime.utcnow()
+        issued_at = datetime.now(UTC)
         expire = issued_at + expires_delta
         payload.update({"exp": expire, "iat": issued_at})
         if scopes:
@@ -29,13 +29,12 @@ class TokenRepository:
         return str(encoded_jwt, "utf-8")
 
     @classmethod
-    def _add_user_payload(cls, user: User, data: dict = None) -> dict:
-        if data is None:
-            data = {}
+    def _generate_user_payload(cls, user: User) -> dict:
+        data: dict = {"uid": str(user.id)}
         if user.innopolis_sso:
-            data.update({"email": user.innopolis_sso.email})
+            data["email"] = user.innopolis_sso.email
         if user.telegram:
-            data.update({"telegram_id": user.telegram.id})
+            data["telegram_id"] = user.telegram.id
         return data
 
     @classmethod
@@ -46,7 +45,10 @@ class TokenRepository:
 
     @classmethod
     def create_user_access_token(cls, user: User) -> str:
-        data = TokenRepository._add_user_payload(user, data={"uid": str(user.id)})
+        """
+        Generate access token for current user with user id in `uid` field, expires in 1 day. Also will contain email, telegram_id if they are present.
+        """
+        data = TokenRepository._generate_user_payload(user)
         access_token = TokenRepository._create_token(data=data, expires_delta=timedelta(days=1), scopes=["me"])
         return access_token
 

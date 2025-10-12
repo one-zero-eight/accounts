@@ -1,6 +1,5 @@
-# Check settings.schema.yaml for more details
+# yaml-language-server: $schema=settings.schema.yaml
 $schema: "./settings.schema.yaml"
-# ---------- Application settings ----- #
 auth:
   # Run 'openssl rand -hex 32' to generate key
   session_secret_key: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
@@ -24,9 +23,7 @@ mongo:
 telegram:
   bot_token: <bot_token>
   bot_username: <bot_username>
-innopolis_sso:
-  client_id: <client_id>
-  client_secret: <client_secret>
-  redirect_uri: <callback_url>
-  resource_id: null
+accounts:
+  # Get from https://api.innohassle.ru/accounts/v0/tokens/generate-service-token?sub=accounts-local-dev&scopes=users&only_for_me=true
+  api_jwt_token: null
 web_url: http://127.0.0.1

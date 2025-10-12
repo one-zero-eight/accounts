@@ -1,6 +1,5 @@
 __all__ = ["lifespan"]
 
-import json
 from contextlib import asynccontextmanager
 
 from beanie import init_beanie
@@ -23,10 +22,10 @@ async def setup_repositories() -> AsyncIOMotorClient:
     try:
         with timeout(1):
             server_info = await motor_client.server_info()
-            server_info_pretty_text = json.dumps(server_info, indent=2, default=str)
-            logger.info(f"Connected to MongoDB: {server_info_pretty_text}")
+            vesion = server_info["version"]
+            logger.info(f"Connected to MongoDB v{vesion}")
     except ConnectionFailure as e:
-        logger.critical("Could not connect to MongoDB: %s" % e)
+        logger.critical(f"Could not connect to MongoDB: {e}")
 
     mongo_db = motor_client.get_default_database()
     await init_beanie(database=mongo_db, document_models=document_models)

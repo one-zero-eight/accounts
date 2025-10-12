@@ -1,9 +1,14 @@
+"""
+User data and linking users with event groups.
+"""
+
 from typing import Annotated
 
 from authlib.jose import JWTClaims
 from beanie import PydanticObjectId
 from fastapi import APIRouter, Request, Security
 
+from src.api import docs
 from src.api.dependencies import UserIdDep
 from src.exceptions import ObjectNotFound, UserWithoutSessionException
 from src.modules.tokens.dependencies import verify_access_token, verify_access_token_responses
@@ -11,6 +16,9 @@ from src.modules.users.repository import user_repository
 from src.storages.mongo.models import User
 
 router = APIRouter(prefix="/users", tags=["Users"])
+docs.TAGS_INFO.append({"description": __doc__, "name": str(router.tags[0])})
+
+
 UsersScopeDep = Annotated[JWTClaims, Security(verify_access_token, scopes=["users"])]
 
 

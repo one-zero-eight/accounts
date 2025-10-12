@@ -29,7 +29,7 @@ This is the API for accounts service in InNoHassle ecosystem.
 
 ### Technologies
 
-- [Python 3.12](https://www.python.org/downloads/) & [Poetry](https://python-poetry.org/docs/)
+- [Python 3.12+](https://www.python.org/downloads/) & [uv](https://docs.astral.sh/uv/)
 - [FastAPI](https://fastapi.tiangolo.com/) & [Pydantic](https://docs.pydantic.dev/latest/)
 - Database and ORM: [MongoDB](https://www.mongodb.com/), [Beanie](https://beanie-odm.dev/)
 - Formatting and linting: [Ruff](https://docs.astral.sh/ruff/), [pre-commit](https://pre-commit.com/)
@@ -38,80 +38,80 @@ This is the API for accounts service in InNoHassle ecosystem.
 
 ## Development
 
-### Getting started
+### Set up for development
 
-1. Install [Python 3.12](https://www.python.org/downloads/)
-2. Install [Poetry](https://python-poetry.org/docs/)
-3. Install project dependencies with [Poetry](https://python-poetry.org/docs/cli/#options-2).
+1. Install [uv](https://astral.sh/uv/) and [Docker](https://docs.docker.com/engine/install/)
+2. Install dependencies:
    ```bash
-   poetry install
+   uv sync
    ```
-4. Set up [pre-commit](https://pre-commit.com/) hooks:
-
+3. Prepare for development (read logs in the terminal):
    ```bash
-   poetry run pre-commit install --install-hooks -t pre-commit -t commit-msg
+   uv run -m src.prepare
    ```
-5. Set up project settings file (check [settings.schema.yaml](settings.schema.yaml) for more info).
+   > Follow the provided instructions (if needed).
+4. Start development server:
    ```bash
-   cp settings.example.yaml settings.yaml
+   uv run -m src.api --reload
    ```
-   Edit `settings.yaml` according to your needs.
-6. Set up a  [MongoDB](https://www.mongodb.com/) database instance.
-   <details>
-    <summary>Using docker container</summary>
+5. Open the following link the browser: http://localhost:8002.
+   > The API will be reloaded when you edit the code.
 
-    - Set up database settings for [docker-compose](https://docs.docker.com/compose/) in `.env` file:
-      ```bash
-      cp .env.example .env
-      ```
-    - Run the database instance:
-      ```bash
-      docker compose up -d db
-      ```
-    - Make sure to set up the actual database connection in `settings.yaml`, for example:
-      ```yaml
-      database:
-        uri: mongodb://user:password@localhost:27017/db?authSource=admin
-      ```
+> [!IMPORTANT]
+> For endpoints requiring authorization, click "Authorize" button in Swagger UI!
 
-   </details>
+> [!TIP]
+> Edit `settings.yaml` according to your needs, you can view schema in
+> [config_schema.py](src/config_schema.py) and in [settings.schema.yaml](settings.schema.yaml)
 
 **Set up PyCharm integrations**
 
-1. Ruff ([plugin](https://plugins.jetbrains.com/plugin/20574-ruff)).
+1. Run configurations ([docs](https://www.jetbrains.com/help/pycharm/run-debug-configuration.html#createExplicitly)).
+   Right-click the `__main__.py` file in the project explorer, select `Run '__main__'` from the context menu.
+2. Ruff ([plugin](https://plugins.jetbrains.com/plugin/20574-ruff)).
    It will lint and format your code. Make sure to enable `Use ruff format` option in plugin settings.
-2. Pydantic ([plugin](https://plugins.jetbrains.com/plugin/12861-pydantic)). It will fix PyCharm issues with
+3. Pydantic ([plugin](https://plugins.jetbrains.com/plugin/12861-pydantic)). It will fix PyCharm issues with
    type-hinting.
-3. Conventional commits ([plugin](https://plugins.jetbrains.com/plugin/13389-conventional-commit)). It will help you
+4. Conventional commits ([plugin](https://plugins.jetbrains.com/plugin/13389-conventional-commit)). It will help you
    to write [conventional commits](https://www.conventionalcommits.org/en/v1.0.0/).
-
-### Run for development
-
-1. Run the database if you have not done it yet
-2. Run the ASGI server
-   ```bash
-   poetry run python -m src.api
-   ```
-   OR using uvicorn directly
-   ```bash
-   poetry run uvicorn src.api.app:app --use-colors --proxy-headers --forwarded-allow-ips=*
-   ```
-
-Now the API is running on http://localhost:8000. Good job!
 
 ### Deployment
 
-We use Docker with Docker Compose plugin to run the website on servers.
+We use Docker with Docker Compose plugin to run the service on servers.
 
-1. Copy the file with environment variables: `cp .env.example .env`
+1. Copy the file with environment variables: `cp .example.env .env`
 2. Change environment variables in the `.env` file
 3. Copy the file with settings: `cp settings.example.yaml settings.yaml`
 4. Change settings in the `settings.yaml` file according to your needs
    (check [settings.schema.yaml](settings.schema.yaml) for more info)
 5. Install Docker with Docker Compose
-6. Build a Docker image: `docker compose build --pull`
-7. Run the container: `docker compose up --detach`
-8. Check the logs: `docker compose logs -f`
+6. Run the containers: `docker compose up --wait`
+7. Check the logs: `docker compose logs -f`
+
+## FAQ
+
+### Be up to date with the template!
+
+Check https://github.com/one-zero-eight/fastapi-template for updates once in a while.
+
+### How to update dependencies
+
+1. Run `uv sync --upgrade` to update uv.lock file and install the latest versions of the dependencies.
+2. Run `uv tree --outdated --depth=1` will show what package versions are installed and what are the latest versions.
+3. Run `uv run pre-commit autoupdate`
+
+Also, Dependabot will help you to keep your dependencies up-to-date, see [dependabot.yaml](.github/dependabot.yaml).
+
+### How to dump the database
+
+1. Dump:
+   ```bash
+   docker compose exec db sh -c 'mongodump "mongodb://$MONGO_INITDB_ROOT_USERNAME:$MONGO_INITDB_ROOT_PASSWORD@localhost:27017/db?authSource=admin" --db=db --out=dump/'
+   ```
+2. Restore:
+   ```bash
+   docker compose exec db sh -c 'mongorestore "mongodb://$MONGO_INITDB_ROOT_USERNAME:$MONGO_INITDB_ROOT_PASSWORD@localhost:27017/db?authSource=admin" --drop /dump/db'
+   ```
 
 ## Contributing
 

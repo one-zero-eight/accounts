@@ -1,21 +1,24 @@
 import os
 import sys
-from pathlib import Path
 
-import uvicorn
+from src.prepare import BASE_DIR, prepare
 
-# Change dir to project root (three levels up from this file)
-os.chdir(Path(__file__).parents[2])
+os.chdir(BASE_DIR)
+
+prepare()
+
+import uvicorn  # noqa: E402
+
 # Get arguments from command
 args = sys.argv[1:]
+extended_args = [
+    "src.api.app:app",
+    "--use-colors",
+    "--proxy-headers",
+    "--forwarded-allow-ips=*",
+    "--port=8002",
+    *args,
+]
 
-uvicorn.main.main(
-    [
-        "src.api.app:app",
-        "--use-colors",
-        "--proxy-headers",
-        "--forwarded-allow-ips=*",
-        "--log-config=logging.yaml",
-        *args,
-    ]
-)
+print(f"🚀 Starting Uvicorn server: 'uvicorn {' '.join(extended_args)}'")
+uvicorn.main.main(extended_args)

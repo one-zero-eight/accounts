@@ -18,6 +18,19 @@ from src.modules.users.repository import user_repository
 
 router = APIRouter(prefix="/innopolis")
 
+
+def ensure_allowed_redirect_uri(return_to: str):
+    try:
+        url = URL(return_to)
+        if url.hostname is None:
+            return  # Ok. Allow returning to the current domain
+        if url.hostname in settings.auth.allowed_domains:
+            return  # Ok. Hostname is allowed (does not check port)
+    except (AssertionError, ValueError):
+        pass  # Bad. URL is malformed
+    raise InvalidReturnToURL()
+
+
 if settings.innopolis_sso:
     oauth = OAuth()
 
@@ -99,14 +112,3 @@ if settings.innopolis_sso:
             else:
                 # We don't know anything, so let's return the user to the main page.
                 return RedirectResponse(settings.web_url, status_code=302)
-
-    def ensure_allowed_redirect_uri(return_to: str):
-        try:
-            url = URL(return_to)
-            if url.hostname is None:
-                return  # Ok. Allow returning to the current domain
-            if url.hostname in settings.auth.allowed_domains:
-                return  # Ok. Hostname is allowed (does not check port)
-        except (AssertionError, ValueError):
-            pass  # Bad. URL is malformed
-        raise InvalidReturnToURL()

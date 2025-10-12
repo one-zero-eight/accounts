@@ -4,8 +4,6 @@
 # pre-commit install
 # pre-commit run --all-files
 
-# Automatically update hooks: pre-commit autoupdate
-
 default_stages:
   - pre-commit
   - pre-push
@@ -15,7 +13,7 @@ default_stages:
 repos:
   # Fix some errors with Ruff
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.3.2
+    rev: v0.12.8
     hooks:
       - id: ruff
         args: [ --fix, --exit-zero ]
@@ -25,19 +23,17 @@ repos:
 
   # Lint Python files with Ruff
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.3.2
+    rev: v0.12.8
     hooks:
       - id: ruff
         name: "ruff: linting"
 
   # Check other files
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.5.0
+    rev: v5.0.0
     hooks:
       - id: trailing-whitespace
-        exclude: alembic/
       - id: end-of-file-fixer
-        exclude: alembic/
       - id: check-added-large-files
 
   # Generate settings.schema.yaml
@@ -46,6 +42,6 @@ repos:
       - id: generate-settings-schema
         name: generate settings.schema.yaml
         language: system
-        entry: poetry run python ./scripts/generate_settings_schema.py
+        entry: uv run python ./scripts/generate_settings_schema.py
         pass_filenames: false
         files: ^src/config_schema.py$
