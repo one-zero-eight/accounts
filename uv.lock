@@ -312,19 +312,19 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "authlib", specifier = ">=1.2.1,<2" },
-    { name = "beanie", specifier = ">=1.25.0,<2" },
+    { name = "beanie", specifier = ">=1.25.0,<3" },
     { name = "colorlog", specifier = ">=6.8.2,<7" },
-    { name = "fastapi", specifier = ">=0.115.0,<0.116" },
-    { name = "fastapi-swagger", specifier = ">=0.2.3,<0.3" },
+    { name = "fastapi", specifier = ">=0.115.0,<0.120" },
+    { name = "fastapi-swagger", specifier = ">=0.2.3,<0.4" },
     { name = "gunicorn", specifier = "==23.0.0" },
-    { name = "httpx", specifier = ">=0.27.0,<0.28" },
+    { name = "httpx", specifier = ">=0.27.0,<0.29" },
     { name = "itsdangerous", specifier = ">=2.1.2,<3" },
-    { name = "pre-commit", specifier = ">=3.6.2,<4" },
+    { name = "pre-commit", specifier = ">=3.6.2,<5" },
     { name = "pydantic", extras = ["email"], specifier = ">=2.6.3,<3" },
-    { name = "python-multipart", specifier = ">=0.0.10,<0.0.11" },
+    { name = "python-multipart", specifier = ">=0.0.10,<0.0.21" },
     { name = "pyyaml", specifier = ">=6.0.1,<7" },
-    { name = "ruff", specifier = ">=0.6.7,<0.7" },
-    { name = "uvicorn", specifier = ">=0.30.6,<0.31" },
+    { name = "ruff", specifier = ">=0.6.7,<0.15" },
+    { name = "uvicorn", specifier = ">=0.30.6,<0.38" },
 ]
 
 [[package]]
