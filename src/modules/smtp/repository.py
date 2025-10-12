@@ -22,7 +22,7 @@ class SMTPRepository:
         self._server = smtplib.SMTP(settings.smtp.host, settings.smtp.port)
 
     @contextlib.contextmanager
-    def _context(self) -> Generator[None, None, None]:
+    def _context(self) -> Generator[None]:
         self._server.connect(settings.smtp.host, settings.smtp.port)
         self._server.starttls()
         self._server.login(settings.smtp.username, settings.smtp.password.get_secret_value())

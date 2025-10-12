@@ -36,7 +36,7 @@ class UserInfoFromSSO(BaseModel):
             if not is_student and not is_staff:
                 logger.warning(f"Neither student or staff: {status}")
         else:
-            logger.warning(f"Status is empty for {userinfo["email"]}: {status}")
+            logger.warning(f"Status is empty for {userinfo['email']}: {status}")
         return UserInfoFromSSO(
             access_token=token["access_token"],
             refresh_token=token["refresh_token"],
