@@ -13,7 +13,6 @@ jobs:
         with:
           enable-cache: true
           activate-environment: true
-          python-version: '3.13'
       - name: 📦 Install the project
         run: uv sync
       - name: 🧪 Run pre-commit
