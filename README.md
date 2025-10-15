@@ -1,6 +1,6 @@
-# Accounts API | InNoHassle ecosystem
+# Accounts
 
-> https://api.innohassle.ru/accounts
+> https://api.innohassle.ru/accounts/v0
 
 [![GitHub Actions pre-commit](https://img.shields.io/github/actions/workflow/status/one-zero-eight/InNoHassle-Accounts/pre-commit.yaml?label=pre-commit)](https://github.com/one-zero-eight/InNoHassle-Accounts/actions)
 
@@ -40,7 +40,7 @@ This is the API for accounts service in InNoHassle ecosystem.
 
 ### Set up for development
 
-1. Install [uv](https://astral.sh/uv/) and [Docker](https://docs.docker.com/engine/install/)
+1. Install [uv](https://docs.astral.sh/uv/) and [Docker](https://docs.docker.com/engine/install/)
 2. Install dependencies:
    ```bash
    uv sync
@@ -54,11 +54,12 @@ This is the API for accounts service in InNoHassle ecosystem.
    ```bash
    uv run -m src.api --reload
    ```
-5. Open the following link the browser: http://localhost:8002.
-   > The API will be reloaded when you edit the code.
+   > Follow the provided instructions (if needed).
+5. Open in the browser: http://localhost:8002.
+   > The api will be reloaded when you edit the code
 
 > [!IMPORTANT]
-> For endpoints requiring authorization, click "Authorize" button in Swagger UI!
+> For endpoints requiring authorization click "Authorize" button in Swagger UI
 
 > [!TIP]
 > Edit `settings.yaml` according to your needs, you can view schema in
@@ -85,7 +86,7 @@ We use Docker with Docker Compose plugin to run the service on servers.
 4. Change settings in the `settings.yaml` file according to your needs
    (check [settings.schema.yaml](settings.schema.yaml) for more info)
 5. Install Docker with Docker Compose
-6. Run the containers: `docker compose up --wait`
+6. Run the containers: `docker compose up --build --wait`
 7. Check the logs: `docker compose logs -f`
 
 ## FAQ
@@ -106,11 +107,11 @@ Also, Dependabot will help you to keep your dependencies up-to-date, see [depend
 
 1. Dump:
    ```bash
-   docker compose exec db sh -c 'mongodump "mongodb://$MONGO_INITDB_ROOT_USERNAME:$MONGO_INITDB_ROOT_PASSWORD@localhost:27017/db?authSource=admin" --db=db --out=dump/'
+   docker compose exec db sh -c 'mongodump "mongodb://$MONGO_INITDB_ROOT_USERNAME:$MONGO_INITDB_ROOT_PASSWORD@127.0.0.1:27017/db?authSource=admin" --db=db --out=dump/'
    ```
 2. Restore:
    ```bash
-   docker compose exec db sh -c 'mongorestore "mongodb://$MONGO_INITDB_ROOT_USERNAME:$MONGO_INITDB_ROOT_PASSWORD@localhost:27017/db?authSource=admin" --drop /dump/db'
+   docker compose exec db sh -c 'mongorestore "mongodb://$MONGO_INITDB_ROOT_USERNAME:$MONGO_INITDB_ROOT_PASSWORD@127.0.0.1:27017/db?authSource=admin" --drop /dump/db'
    ```
 
 ## Contributing

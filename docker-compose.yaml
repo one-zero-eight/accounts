@@ -11,12 +11,12 @@ services:
       db:
         condition: service_healthy
     ports:
-      - "8000:8000"
+      - "8002:8000"
     volumes:
-      - "./settings.yaml:/code/settings.yaml:ro" # Read-only settings file
+      - "./settings.yaml:/app/settings.yaml:ro" # Read-only settings file
 
   db:
-    # See more: https://registry.hub.docker.com/_/mongo
+    # See more: https://hub.docker.com/_/mongo
     image: "mongo:8.0"
     restart: no
     ports:
