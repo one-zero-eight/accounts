@@ -6,11 +6,11 @@ from typing import Annotated
 
 from authlib.jose import JWTClaims
 from beanie import PydanticObjectId
-from fastapi import APIRouter, Request, Security
+from fastapi import APIRouter, Body, Request, Security
 
 from src.api import docs
 from src.api.dependencies import UserIdDep
-from src.exceptions import ObjectNotFound, UserWithoutSessionException
+from src.exceptions import NotEnoughPermissionsException, ObjectNotFound, UserWithoutSessionException
 from src.modules.tokens.dependencies import verify_access_token, verify_access_token_responses
 from src.modules.users.repository import user_repository
 from src.storages.mongo.models import User
@@ -38,15 +38,20 @@ async def get_me(user_id: UserIdDep, request: Request) -> User:
     return user
 
 
-def allowed_user_id_for_jwt_claims(user_id: PydanticObjectId, jwt_claims: JWTClaims) -> bool:
+def allowed_user_id_for_jwt_claims(
+    user_id: PydanticObjectId | list[PydanticObjectId] | None, jwt_claims: JWTClaims
+) -> bool:
     scope_string = jwt_claims.get("scope", "")
     scopes = scope_string.split() if scope_string else []
     users_scopes = [scope for scope in scopes if scope.startswith("users")]
     if "users" in users_scopes:  # wildcard
         return True
 
-    if f"users:{user_id}" in users_scopes:
-        return True
+    if user_id:
+        if isinstance(user_id, PydanticObjectId):
+            return f"users:{user_id}" in users_scopes
+        elif isinstance(user_id, list):
+            return all(f"users:{user_id_item}" in users_scopes for user_id_item in user_id)
 
     return False
 
@@ -68,17 +73,44 @@ async def get_user_by_telegram_id(telegram_id: int, jwt_claims: UsersScopeDep) -
     return user
 
 
+@router.post(
+    "/by-id/get-bulk",
+    responses={
+        200: {"description": "Mapping [user_id -> user or None]"},
+        **ObjectNotFound.responses,
+        **NotEnoughPermissionsException.responses,
+        **verify_access_token_responses,
+    },
+)
+async def get_bulk_users_by_id(
+    jwt_claims: UsersScopeDep, user_ids: list[PydanticObjectId] = Body(min_items=1)
+) -> dict[PydanticObjectId, User | None]:
+    """
+    Get user by id
+    """
+    if not allowed_user_id_for_jwt_claims(user_ids, jwt_claims):
+        raise NotEnoughPermissionsException("Not enough permissions")
+
+    users = await user_repository.read_bulk(user_ids)
+    return users
+
+
 @router.get(
     "/by-id/{user_id}",
-    response_model=User,
-    responses={200: {"description": "User info"}, **ObjectNotFound.responses, **verify_access_token_responses},
+    responses={
+        200: {"description": "User info"},
+        **ObjectNotFound.responses,
+        **verify_access_token_responses,
+    },
 )
 async def get_user_by_id(user_id: PydanticObjectId, jwt_claims: UsersScopeDep) -> User:
     """
     Get user by id
     """
+    if not allowed_user_id_for_jwt_claims(user_id, jwt_claims):
+        raise ObjectNotFound("User not found because of insufficient permissions")
     user = await user_repository.read(user_id)
-    if user is None or not allowed_user_id_for_jwt_claims(user.id, jwt_claims):
+    if user is None:
         raise ObjectNotFound("User not found")
     return user
 

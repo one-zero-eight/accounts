@@ -1,4 +1,5 @@
 from beanie import PydanticObjectId, UpdateResponse
+from beanie.odm.operators.find.comparison import In
 from beanie.odm.operators.update.general import Set
 
 from src.modules.providers.innopolis.schemas import UserInfoFromSSO
@@ -33,6 +34,13 @@ class UserRepository:
     async def read(self, user_id: PydanticObjectId) -> User | None:
         user = await User.find_one(User.id == user_id)
         return user
+
+    async def read_bulk(self, user_ids: list[PydanticObjectId]) -> dict[PydanticObjectId, User | None]:
+        result = dict.fromkeys(user_ids, None)
+        users = await User.find(In(User.id, user_ids)).to_list()
+        for user in users:
+            result[user.id] = user
+        return result
 
     async def read_by_telegram_id(self, telegram_id: int) -> User | None:
         user = await User.find_one(User.telegram.id == telegram_id)
