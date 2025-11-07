@@ -24,7 +24,9 @@ class UserRepository:
         return user
 
     async def update_telegram(self, user_id: PydanticObjectId, telegram_data: TelegramWidgetData) -> User:
-        user = await User.find_one(User.id == user_id).update(Set({User.telegram: telegram_data}))
+        user = await User.find_one(User.id == user_id).update(
+            Set({User.telegram: telegram_data, User.telegram_update_date: None})
+        )
         return user
 
     async def exists(self, user_id: PydanticObjectId) -> bool:
@@ -40,6 +42,33 @@ class UserRepository:
         users = await User.find(In(User.id, user_ids)).to_list()
         for user in users:
             result[user.id] = user
+        return result
+
+    async def read_all_users_with_telegram_id(self) -> dict[PydanticObjectId, int]:
+        result = dict()
+        users = (
+            await User.get_motor_collection()
+            .aggregate(
+                [
+                    {
+                        "$match": {
+                            "telegram.id": {
+                                "$exists": True,
+                            },
+                        },
+                    },
+                    {
+                        "$project": {
+                            "_id": 1,
+                            "telegram.id": 1,
+                        },
+                    },
+                ]
+            )
+            .to_list()
+        )
+        for user in users:
+            result[user["_id"]] = user["telegram"]["id"]
         return result
 
     async def read_by_telegram_id(self, telegram_id: int) -> User | None:

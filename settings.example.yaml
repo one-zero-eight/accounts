@@ -20,9 +20,7 @@ auth:
     -----END PUBLIC KEY-----
 mongo:
   uri: mongodb://mongoadmin:secret@localhost:27017/db?authSource=admin
-telegram:
-  bot_token: <bot_token>
-  bot_username: <bot_username>
+telegram: null
 accounts:
   # Get from https://api.innohassle.ru/accounts/v0/tokens/generate-service-token?sub=accounts-local-dev&scopes=users&only_for_me=true
   api_jwt_token: null
