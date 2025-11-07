@@ -2,7 +2,7 @@ __all__ = ["UserInfoFromSSO"]
 
 import datetime
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from src.logging_ import logger
 
@@ -11,9 +11,9 @@ class UserInfoFromSSO(BaseModel):
     email: str
     name: str | None = None
 
-    access_token: str | None = Field(None, exclude=True)
-    refresh_token: str | None = Field(None, exclude=True)
-    expires_at: datetime.datetime | None = Field(None, exclude=True)
+    access_token: str | None = None
+    refresh_token: str | None = None
+    expires_at: datetime.datetime | None = None
     issued_at: datetime.datetime | None = None
     is_student: bool = False
     is_staff: bool = False

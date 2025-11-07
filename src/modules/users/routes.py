@@ -13,7 +13,7 @@ from src.api.dependencies import UserIdDep
 from src.exceptions import NotEnoughPermissionsException, ObjectNotFound, UserWithoutSessionException
 from src.modules.tokens.dependencies import verify_access_token, verify_access_token_responses
 from src.modules.users.repository import user_repository
-from src.storages.mongo.models import User
+from src.modules.users.schemas import ViewUser, view_from_user
 
 router = APIRouter(prefix="/users", tags=["Users"])
 docs.TAGS_INFO.append({"description": __doc__, "name": str(router.tags[0])})
@@ -26,7 +26,7 @@ UsersScopeDep = Annotated[JWTClaims, Security(verify_access_token, scopes=["user
     "/me",
     responses={200: {"description": "Current user info"}, **UserWithoutSessionException.responses},
 )
-async def get_me(user_id: UserIdDep, request: Request) -> User:
+async def get_me(user_id: UserIdDep, request: Request) -> ViewUser:
     """
     Get current user info if authenticated
     """
@@ -35,7 +35,7 @@ async def get_me(user_id: UserIdDep, request: Request) -> User:
         # clear session cookie if user is not found
         request.session.clear()
         raise UserWithoutSessionException()
-    return user
+    return view_from_user(user)
 
 
 def allowed_user_id_for_jwt_claims(
@@ -58,10 +58,9 @@ def allowed_user_id_for_jwt_claims(
 
 @router.get(
     "/by-telegram-id/{telegram_id}",
-    response_model=User,
     responses={200: {"description": "User info"}, **ObjectNotFound.responses, **verify_access_token_responses},
 )
-async def get_user_by_telegram_id(telegram_id: int, jwt_claims: UsersScopeDep) -> User:
+async def get_user_by_telegram_id(telegram_id: int, jwt_claims: UsersScopeDep) -> ViewUser:
     """
     Get user by telegram id
     """
@@ -70,7 +69,7 @@ async def get_user_by_telegram_id(telegram_id: int, jwt_claims: UsersScopeDep) -
     if user is None or not allowed_user_id_for_jwt_claims(user.id, jwt_claims):
         raise ObjectNotFound("User not found")
 
-    return user
+    return view_from_user(user)
 
 
 @router.post(
@@ -84,7 +83,7 @@ async def get_user_by_telegram_id(telegram_id: int, jwt_claims: UsersScopeDep) -
 )
 async def get_bulk_users_by_id(
     jwt_claims: UsersScopeDep, user_ids: list[PydanticObjectId] = Body(min_items=1)
-) -> dict[PydanticObjectId, User | None]:
+) -> dict[PydanticObjectId, ViewUser | None]:
     """
     Get user by id
     """
@@ -92,7 +91,7 @@ async def get_bulk_users_by_id(
         raise NotEnoughPermissionsException("Not enough permissions")
 
     users = await user_repository.read_bulk(user_ids)
-    return users
+    return {user_id: view_from_user(user) if user else None for user_id, user in users.items()}
 
 
 @router.get(
@@ -103,7 +102,7 @@ async def get_bulk_users_by_id(
         **verify_access_token_responses,
     },
 )
-async def get_user_by_id(user_id: PydanticObjectId, jwt_claims: UsersScopeDep) -> User:
+async def get_user_by_id(user_id: PydanticObjectId, jwt_claims: UsersScopeDep) -> ViewUser:
     """
     Get user by id
     """
@@ -112,19 +111,22 @@ async def get_user_by_id(user_id: PydanticObjectId, jwt_claims: UsersScopeDep) -
     user = await user_repository.read(user_id)
     if user is None:
         raise ObjectNotFound("User not found")
-    return user
+    return view_from_user(user)
 
 
 @router.get(
     "/by-innomail/{email}",
-    response_model=User,
-    responses={200: {"description": "User info"}, **ObjectNotFound.responses, **verify_access_token_responses},
+    responses={
+        200: {"description": "User info"},
+        **ObjectNotFound.responses,
+        **verify_access_token_responses,
+    },
 )
-async def get_user_by_innomail(email: str, jwt_claims: UsersScopeDep) -> User:
+async def get_user_by_innomail(email: str, jwt_claims: UsersScopeDep) -> ViewUser:
     """
     Get user by email
     """
     user = await user_repository.read_by_innomail(email)
     if user is None or not allowed_user_id_for_jwt_claims(user.id, jwt_claims):
         raise ObjectNotFound("User not found")
-    return user
+    return view_from_user(user)
