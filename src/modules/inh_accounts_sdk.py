@@ -11,7 +11,23 @@ from beanie import PydanticObjectId
 from pydantic import BaseModel, Field
 
 from src.config import settings
-from src.modules.users.schemas import InnopolisInfo, TelegramInfo
+
+
+class TelegramInfo(BaseModel):
+    id: int
+    first_name: str
+    last_name: str | None = None
+    username: str | None = None
+    photo_url: str | None = None
+    updated_at: datetime.datetime
+
+
+class InnopolisInfo(BaseModel):
+    email: str
+    name: str | None = None
+    is_student: bool = False
+    is_staff: bool = False
+    updated_at: datetime.datetime
 
 
 class UserInfoFromSSO(BaseModel):
