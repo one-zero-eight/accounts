@@ -7,9 +7,11 @@ import time
 import httpx
 from authlib.jose import JsonWebKey, JWTClaims, KeySet, jwt
 from authlib.jose.errors import JoseError
-from pydantic import BaseModel
+from beanie import PydanticObjectId
+from pydantic import BaseModel, Field
 
 from src.config import settings
+from src.modules.users.schemas import InnopolisInfo, TelegramInfo
 
 
 class UserInfoFromSSO(BaseModel):
@@ -32,8 +34,21 @@ class TelegramWidgetData(BaseModel):
 
 
 class UserSchema(BaseModel):
-    telegram: TelegramWidgetData | None
-    innopolis_sso: UserInfoFromSSO | None
+    id: PydanticObjectId
+    innopolis_info: InnopolisInfo | None = None
+    telegram_info: TelegramInfo | None = None
+    innohassle_admin: bool = False
+
+    innopolis_sso: UserInfoFromSSO | None = Field(
+        None,
+        deprecated=True,
+        description="Deprecated field, use `innopolis_info` instead, dont trust data from `innopolis_sso`",
+    )
+    telegram: TelegramWidgetData | None = Field(
+        None,
+        deprecated=True,
+        description="Deprecated field, use `telegram_info` instead",
+    )
 
 
 class UserTokenData(BaseModel):
