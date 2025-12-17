@@ -36,6 +36,19 @@ This is the API for accounts service in InNoHassle ecosystem.
 - Deployment: [Docker](https://www.docker.com/), [Docker Compose](https://docs.docker.com/compose/),
   [GitHub Actions](https://github.com/features/actions)
 
+## SDK
+
+For other services in the InNoHassle ecosystem that need to interact with the Accounts API or with tokens from Accounts API, you can copy the SDK file from [`src/modules/inh_accounts_sdk.py`](src/modules/inh_accounts_sdk.py). This file is self-contained and can be used independently.
+
+The SDK provides:
+- `InNoHassleAccounts` class for API interactions
+- JWT token decoding and validation
+- User retrieval by ID, email, or Telegram ID
+- Pydantic schemas for user data
+
+> [!NOTE]
+> The SDK file is designed to be copied into other projects.
+
 ## Development
 
 ### Set up for development
