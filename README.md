@@ -38,7 +38,7 @@ This is the API for accounts service in InNoHassle ecosystem.
 
 ## SDK
 
-For other services in the InNoHassle ecosystem that need to interact with the Accounts API or with tokens from Accounts API, you can copy the SDK file from [`src/modules/inh_accounts_sdk.py`](src/modules/inh_accounts_sdk.py). This file is self-contained and can be used independently.
+For other services in the InNoHassle ecosystem that need to interact with the Accounts API or with tokens from Accounts API, you can copy the SDK file from [`inh_accounts_sdk.py`](inh_accounts_sdk.py). This file is self-contained and can be used independently.
 
 The SDK provides:
 - `InNoHassleAccounts` class for API interactions
