@@ -25,7 +25,7 @@ class UserRepository:
 
     async def update_telegram(self, user_id: PydanticObjectId, telegram_data: TelegramWidgetData) -> User:
         user = await User.find_one(User.id == user_id).update(
-            Set({User.telegram: telegram_data, User.telegram_update_date: None})
+            Set({User.telegram: telegram_data, User.telegram_update_data: None})
         )
         return user
 
