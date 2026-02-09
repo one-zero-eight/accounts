@@ -6,7 +6,7 @@ from typing import Annotated
 
 from authlib.jose import JWTClaims
 from beanie import PydanticObjectId
-from fastapi import APIRouter, Body, Request, Security
+from fastapi import APIRouter, Body, Query, Request, Security
 
 from src.api import docs
 from src.api.dependencies import UserIdDep
@@ -36,6 +36,22 @@ async def get_me(user_id: UserIdDep, request: Request) -> ViewUser:
         request.session.clear()
         raise UserWithoutSessionException()
     return view_from_user(user)
+
+
+SUGGEST_ON_TYPING_LIMIT = 10
+
+
+@router.get(
+    "/suggest-user-on-typing",
+    responses={200: {"description": "Hint on type"}, **verify_access_token_responses},
+)
+async def get_hint_on_type(_: UserIdDep, query: str = Query(min_length=3)) -> list[ViewUser]:
+    """
+    Suggest user on typing, for example when invite to event.
+    """
+    users = await user_repository.search_by_query_with_rerank(query, limit=SUGGEST_ON_TYPING_LIMIT)
+
+    return [view_from_user(u, include_update_data=False, include_deprecated_fields=False) for u in users]
 
 
 def allowed_user_id_for_jwt_claims(
@@ -112,6 +128,38 @@ async def get_user_by_id(user_id: PydanticObjectId, jwt_claims: UsersScopeDep) -
     if user is None:
         raise ObjectNotFound("User not found")
     return view_from_user(user)
+
+
+@router.post(
+    "/by-innomail/get-bulk",
+    responses={
+        200: {"description": "Mapping [email -> user or None]"},
+        **ObjectNotFound.responses,
+        **NotEnoughPermissionsException.responses,
+        **verify_access_token_responses,
+    },
+)
+async def get_bulk_users_by_innomail(
+    jwt_claims: UsersScopeDep, emails: list[str] = Body(min_length=1)
+) -> dict[str, ViewUser | None]:
+    """
+    Get users by email
+    """
+
+    users = await user_repository.read_by_innomail_bulk(emails)
+    user_ids = [user.id for user in users.values() if user is not None]
+    if not allowed_user_id_for_jwt_claims(user_ids, jwt_claims):
+        raise NotEnoughPermissionsException("Not enough permissions")
+    return {
+        email: view_from_user(
+            user,
+            include_update_data=False,
+            include_deprecated_fields=False,
+        )
+        if user
+        else None
+        for email, user in users.items()
+    }
 
 
 @router.get(

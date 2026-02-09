@@ -7,7 +7,7 @@ from src.config import settings
 
 bearer_scheme = HTTPBearer(
     scheme_name="Bearer",
-    description="Token from [InNoHassle Accounts](https://innohassle.ru/account/token)",
+    description="Token from [InNoHassle Accounts](https://innohassle.ru/account/token), or from [#Tokens](http://127.0.0.1:8002/docs#/Tokens) if local development",
     bearerFormat="JWT",
     auto_error=False,  # We'll handle error manually
 )

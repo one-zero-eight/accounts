@@ -80,25 +80,8 @@ def check_database_access():
     from motor.motor_asyncio import AsyncIOMotorClient
     from pymongo import timeout
 
-    DEFAULT_DB_URL = "mongodb://mongoadmin:secret@localhost:27017/db?authSource=admin"
     settings = get_settings()
-    database_uri = settings.get("database_uri")
-
-    if not database_uri or database_uri == "...":
-        print("⚠️ `database_uri` is missing in `settings.yaml`. Setting default one.")
-
-        try:
-            with open(SETTINGS_FILE) as f:
-                as_text = f.read()
-            as_text = as_text.replace("database_uri: null", f"database_uri: {DEFAULT_DB_URL}")
-            as_text = as_text.replace("database_uri: ...", f"database_uri: {DEFAULT_DB_URL}")
-            with open(SETTINGS_FILE, "w") as f:
-                f.write(as_text)
-            print("  ✅ `database_uri` has been updated in `settings.yaml`.")
-            database_uri = DEFAULT_DB_URL
-        except Exception as e:
-            print(f"  ❌ Error updating `settings.yaml`: {e}")
-            return
+    database_uri = settings.get("mongo", {}).get("uri")
 
     def get_docker_compose_command():
         commands = ["docker compose", "docker-compose"]

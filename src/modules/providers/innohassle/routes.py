@@ -6,7 +6,7 @@ from src.config_schema import Environment
 from src.exceptions import ObjectNotFound
 from src.storages.mongo.models import User
 
-router = APIRouter(prefix="/innohassle")
+router = APIRouter(prefix="/innohassle-local-dev")
 
 if settings.accounts:
     if settings.environment == Environment.PRODUCTION:
@@ -22,7 +22,7 @@ if settings.accounts:
     )
     async def innohassle_accounts_login(user_id: str, request: Request):
         """
-        Login as any user from InNoHassle Accounts, see [InNoHassle Accounts API](https://api.innohassle.ru/accounts/v0/docs#/Users/users_get_me).
+        Login as any user from InNoHassle Accounts (usage for local development only), firstly get your id from [InNoHassle Accounts API](https://api.innohassle.ru/accounts/v0/docs#/Users/users_get_me), then set it as `user_id` in the request body. Note that will be used `accounts.api_jwt_token` from `settings.yaml` to authorize requests to InNoHassle Accounts API, so most probably you will get access only to your own user.
         """
         request.session.clear()
         user_from_innohassle_accounts = await get_innohassle_user(user_id)

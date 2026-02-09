@@ -1,6 +1,6 @@
 """
 Providers for authentication or connectors of social accounts.
-You can use [this link on production](https://api.innohassle.ru/accounts/v0/providers/innopolis/login?redirect_uri=%2Faccounts%2Fv0%2F) and [this link on staging](https://api.innohassle.ru/accounts/staging-v0/providers/innopolis/login?redirect_uri=%2Faccounts%2Fstaging-v0%2F) to login with Innopolis SSO into Accounts API."""
+You can use [this link on production](https://api.innohassle.ru/accounts/v0/providers/innopolis/login?redirect_uri=%2Faccounts%2Fv0%2F), [this link on staging](https://api.innohassle.ru/accounts/staging-v0/providers/innopolis/login?redirect_uri=%2Faccounts%2Fstaging-v0%2F) to login with Innopolis SSO into Accounts API."""
 
 from fastapi import APIRouter
 

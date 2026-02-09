@@ -52,7 +52,7 @@ class ViewUser(BaseModel):
     )
 
 
-def view_from_user(user: User) -> "ViewUser":
+def view_from_user(user: User, include_update_data: bool = True, include_deprecated_fields: bool = True) -> "ViewUser":
     id = user.id
     if user.innopolis_sso:
         innopolis_info = InnopolisInfo(
@@ -89,9 +89,9 @@ def view_from_user(user: User) -> "ViewUser":
         id=id,
         innopolis_info=innopolis_info,
         telegram_info=telegram_info,
-        telegram_update_data=user.telegram_update_data,
+        telegram_update_data=user.telegram_update_data if include_update_data else None,
         innohassle_admin=user.innohassle_admin,
         # deprecated fields
-        innopolis_sso=user.innopolis_sso,
-        telegram=user.telegram,
+        innopolis_sso=user.innopolis_sso if include_deprecated_fields else None,
+        telegram=user.telegram if include_deprecated_fields else None,
     )
