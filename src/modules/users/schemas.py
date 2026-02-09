@@ -5,6 +5,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from src.modules.providers.innopolis.schemas import UserInfoFromSSO
 from src.modules.providers.telegram.schemas import TelegramWidgetData
+from src.modules.telegram_update.schemas import TelegramUpdateData
 from src.storages.mongo.models import User
 
 
@@ -36,6 +37,7 @@ class ViewUser(BaseModel):
     id: PydanticObjectId
     innopolis_info: InnopolisInfo | None = None
     telegram_info: TelegramInfo | None = None
+    telegram_update_data: TelegramUpdateData | None = None
     innohassle_admin: bool = False
 
     innopolis_sso: UserInfoFromSSO | None = Field(
@@ -87,6 +89,7 @@ def view_from_user(user: User) -> "ViewUser":
         id=id,
         innopolis_info=innopolis_info,
         telegram_info=telegram_info,
+        telegram_update_data=user.telegram_update_data,
         innohassle_admin=user.innohassle_admin,
         # deprecated fields
         innopolis_sso=user.innopolis_sso,
