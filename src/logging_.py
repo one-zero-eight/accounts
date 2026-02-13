@@ -76,7 +76,7 @@ dictConfig = {
         "src": {"class": "logging.StreamHandler", "formatter": "src", "stream": "ext://sys.stdout"},
     },
     "loggers": {
-        "src": {"handlers": ["src"], "level": "INFO", "propagate": False},
+        "src": {"handlers": ["src"], "level": "DEBUG", "propagate": False},
         "uvicorn.access": {"handlers": ["default"], "level": "INFO", "propagate": False},
         "uvicorn.error": {"handlers": ["default"], "level": "INFO", "propagate": False},
         "httpx": {"handlers": ["default"], "level": "WARNING", "propagate": False},
