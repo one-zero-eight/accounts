@@ -23,6 +23,7 @@ class InnopolisInfo(BaseModel):
     name: str | None = None
     is_student: bool = False
     is_staff: bool = False
+    is_college: bool = False
     updated_at: datetime.datetime
 
 
@@ -60,6 +61,7 @@ def view_from_user(user: User, include_update_data: bool = True, include_depreca
             name=user.innopolis_sso.name,
             is_student=user.innopolis_sso.is_student,
             is_staff=user.innopolis_sso.is_staff,
+            is_college=user.innopolis_sso.is_college,
             updated_at=user.innopolis_sso.issued_at or datetime.datetime.now(datetime.UTC),
         )
     else:

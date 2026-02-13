@@ -17,6 +17,7 @@ class UserInfoFromSSO(BaseModel):
     issued_at: datetime.datetime | None = None
     is_student: bool = False
     is_staff: bool = False
+    is_college: bool = False
     group: str | None = None
 
     @classmethod
@@ -25,7 +26,7 @@ class UserInfoFromSSO(BaseModel):
         if isinstance(status, str):
             status = [status]
         status: list[str]
-        is_student = is_staff = False
+        is_student = is_staff = is_college = False
         if status:
             if "Student" in status:
                 is_student = True
@@ -33,8 +34,11 @@ class UserInfoFromSSO(BaseModel):
             if "Staff" in status:
                 is_staff = True
 
-            if not is_student and not is_staff:
-                logger.warning(f"Neither student or staff: {status}")
+            if "College" in status:
+                is_college = True
+
+            if not is_student and not is_staff and not is_college:
+                logger.warning(f"Neither student or staff or college: {status}")
         else:
             logger.warning(f"Status is empty for {userinfo['email']}: {status}")
         return UserInfoFromSSO(
@@ -46,5 +50,6 @@ class UserInfoFromSSO(BaseModel):
             expires_at=token["expires_at"],
             is_student=is_student,
             is_staff=is_staff,
+            is_college=is_college,
             group=userinfo.get("group"),
         )
