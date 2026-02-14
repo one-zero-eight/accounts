@@ -114,7 +114,8 @@ async def update_telegram_info():
                             else:
                                 same_count += 1
                         elif (
-                            existing_telegram_update_data and not existing_telegram_update_data.success
+                            (existing_telegram_update_data and not existing_telegram_update_data.success)
+                            or not existing_telegram_update_data
                         ):  # we should save error only if previous update was not successful
                             await user.update(Set({User.telegram_update_data: telegram_update_data}))
 
