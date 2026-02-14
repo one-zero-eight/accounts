@@ -53,7 +53,7 @@ class TelegramWidgetData(BaseModel):
 
 class UserSchema(BaseModel):
     id: PydanticObjectId
-    innopolis_info: InnopolisInfo | None = None
+    innopolis_info: InnopolisInfo
     telegram_info: TelegramInfo | None = None
     innohassle_admin: bool = False
 
@@ -72,7 +72,7 @@ class UserSchema(BaseModel):
 class UserTokenData(BaseModel):
     innohassle_id: str
     "InNoHassle Accounts ID"
-    email: str | None = None
+    email: str
     "Innopolis email (@innopolis.university or @innopolis.ru)"
     telegram_id: int | None = None
     "User's Telegram ID connected to InNoHassle Accounts"
@@ -113,6 +113,7 @@ class InNoHassleAccounts:
             innohassle_id: str = payload["uid"]
             email: str | None = payload.get("email")
             telegram_id: int | None = payload.get("telegram_id")
+            assert email is not None, "Token always have email"
             return UserTokenData(
                 innohassle_id=innohassle_id,
                 email=email,
