@@ -53,6 +53,11 @@ class TokenRepository:
         return access_token
 
     @classmethod
+    def create_impersonation_token(cls, uid: str, email: str) -> str:
+        data = {"uid": uid, "email": email}
+        return TokenRepository._create_token(data=data, expires_delta=timedelta(days=1), scopes=["me"])
+
+    @classmethod
     def create_sport_user_access_token(cls, email: str) -> str:
         data = {"email": email}
         access_token = TokenRepository._create_token(data=data, expires_delta=timedelta(days=1), aud="sport")

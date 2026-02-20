@@ -157,6 +157,26 @@ async def generate_sport_token(
 
 
 @router.get(
+    "/tokens/impersonate",
+    responses={
+        200: {"description": "Impersonated user token"},
+        **UserWithoutSessionException.responses,
+        **NotEnoughPermissionsException.responses,
+    },
+)
+async def impersonate_user(
+    _user: AdminDep,
+    uid: str = Query(..., description="Target user uid to impersonate"),
+    email: str = Query(..., description="Target user email to put in the token"),
+) -> TokenData:
+    """
+    Generate a user access token for the provided uid and email (admin only). Token has scope 'me' and expires in 1 day.
+    """
+    token = TokenRepository.create_impersonation_token(uid, email)
+    return TokenData(access_token=token)
+
+
+@router.get(
     "/tokens/generate-access-token",
     responses={
         200: {"description": "Token"},
