@@ -1,19 +1,16 @@
-__all__ = ["UserIdDep", "OptionalUserIdDep", "UserDep", "AdminDep", "impersonate_cookie_name"]
+__all__ = ["UserIdDep", "OptionalUserIdDep", "UserDep", "AdminDep"]
 
+import time
 from typing import Annotated
 
 from beanie import PydanticObjectId
 from fastapi import Depends, Request
 
-from src.config import settings
-from src.config_schema import Environment
 from src.exceptions import NotEnoughPermissionsException, UserWithoutSessionException
 from src.modules.users.repository import user_repository
 from src.storages.mongo.models import User
 
-impersonate_cookie_name = (
-    "__Secure-accounts-impersonate" if settings.environment == Environment.PRODUCTION else "accounts-impersonate"
-)
+IMPERSONATE_MAX_AGE_SEC = 4 * 60 * 60  # 4 hours
 
 
 async def _get_uid_from_session(request: Request) -> PydanticObjectId:
@@ -24,14 +21,17 @@ async def _get_uid_from_session(request: Request) -> PydanticObjectId:
 
 
 async def _get_optional_uid_from_session(request: Request) -> PydanticObjectId | None:
-    impersonate_uid = request.cookies.get(impersonate_cookie_name)
-    if impersonate_uid:
+    impersonate_uid = request.session.get("impersonate_uid")
+    impersonate_until = request.session.get("impersonate_until")
+    if impersonate_uid and impersonate_until and time.time() < impersonate_until:
         try:
             uid = PydanticObjectId(impersonate_uid)
             if await user_repository.exists(uid):
                 return uid
         except Exception:
             pass
+        request.session.pop("impersonate_uid", None)
+        request.session.pop("impersonate_until", None)
 
     uid = request.session.get("uid")
     if uid is None:

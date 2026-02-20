@@ -4,19 +4,17 @@ Generate access tokens to call other APIs. 'My token' is for frontend which can 
 You can analyze JWT token at [jwt.io](https://jwt.io/).
 """
 
+import time
 from enum import StrEnum
 from typing import Annotated
 
 from authlib.jose import JWTClaims
 from beanie import PydanticObjectId
-from fastapi import APIRouter, Query, Security
+from fastapi import APIRouter, Query, Request, Security
 from pydantic import BaseModel
-from starlette.responses import JSONResponse
 
 from src.api import docs
-from src.api.dependencies import AdminDep, UserDep, impersonate_cookie_name
-from src.config import settings
-from src.config_schema import Environment
+from src.api.dependencies import IMPERSONATE_MAX_AGE_SEC, AdminDep, UserDep
 from src.exceptions import InvalidScope, NotEnoughPermissionsException, ObjectNotFound, UserWithoutSessionException
 from src.modules.tokens.dependencies import verify_access_token
 from src.modules.tokens.repository import TokenRepository
@@ -159,18 +157,6 @@ async def generate_sport_token(
     return TokenData(access_token=token)
 
 
-def _impersonate_cookie_params():
-    path = settings.app_root_path or "/"
-    same_site = "lax" if settings.environment == Environment.PRODUCTION else "none"
-    return {
-        "path": path,
-        "max_age": 4 * 60 * 60,  # 4 hours
-        "samesite": same_site,
-        "secure": settings.environment == Environment.PRODUCTION,
-        "httponly": True,
-    }
-
-
 @router.get(
     "/tokens/impersonate",
     responses={
@@ -180,42 +166,36 @@ def _impersonate_cookie_params():
     },
 )
 async def impersonate_user(
+    request: Request,
     _user: AdminDep,
     uid: str = Query(..., description="Target user uid to impersonate"),
     email: str = Query(..., description="Target user email to put in the token"),
-):
+) -> TokenData:
     """
     Generate a user access token for the provided uid and email (admin only). Token has scope 'me' and expires in 1 day.
-    Also sets impersonation cookie so subsequent requests act as that user until depersonate.
+    Stores impersonation in session (same signed cookie as login); effective for 4 hours until depersonate.
     """
+    request.session["impersonate_uid"] = uid
+    request.session["impersonate_until"] = time.time() + IMPERSONATE_MAX_AGE_SEC
     token = TokenRepository.create_impersonation_token(uid, email)
-    response = JSONResponse(content=TokenData(access_token=token).model_dump())
-    response.set_cookie(impersonate_cookie_name, uid, **_impersonate_cookie_params())
-    return response
+    return TokenData(access_token=token)
 
 
 @router.get(
     "/tokens/depersonate",
     responses={
-        204: {"description": "Impersonation cookie cleared"},
+        204: {"description": "Impersonation cleared"},
         **UserWithoutSessionException.responses,
     },
     status_code=204,
 )
-async def depersonate_user(_user: UserDep):
+async def depersonate_user(request: Request, _user: UserDep):
     """
-    Clear impersonation cookie; subsequent requests use the real session user.
+    Clear impersonation from session; subsequent requests use the real session user.
     """
-    params = _impersonate_cookie_params()
-    response = JSONResponse(content=None, status_code=204)
-    response.delete_cookie(
-        impersonate_cookie_name,
-        path=params["path"],
-        samesite=params["samesite"],
-        secure=params["secure"],
-        httponly=params["httponly"],
-    )
-    return response
+    request.session.pop("impersonate_uid", None)
+    request.session.pop("impersonate_until", None)
+    return None
 
 
 @router.get(
