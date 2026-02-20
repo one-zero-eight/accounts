@@ -11,9 +11,12 @@ from authlib.jose import JWTClaims
 from beanie import PydanticObjectId
 from fastapi import APIRouter, Query, Security
 from pydantic import BaseModel
+from starlette.responses import JSONResponse
 
 from src.api import docs
-from src.api.dependencies import AdminDep, UserDep
+from src.api.dependencies import AdminDep, UserDep, impersonate_cookie_name
+from src.config import settings
+from src.config_schema import Environment
 from src.exceptions import InvalidScope, NotEnoughPermissionsException, ObjectNotFound, UserWithoutSessionException
 from src.modules.tokens.dependencies import verify_access_token
 from src.modules.tokens.repository import TokenRepository
@@ -156,6 +159,18 @@ async def generate_sport_token(
     return TokenData(access_token=token)
 
 
+def _impersonate_cookie_params():
+    path = settings.app_root_path or "/"
+    same_site = "lax" if settings.environment == Environment.PRODUCTION else "none"
+    return {
+        "path": path,
+        "max_age": 4 * 60 * 60,  # 4 hours
+        "samesite": same_site,
+        "secure": settings.environment == Environment.PRODUCTION,
+        "httponly": True,
+    }
+
+
 @router.get(
     "/tokens/impersonate",
     responses={
@@ -168,12 +183,39 @@ async def impersonate_user(
     _user: AdminDep,
     uid: str = Query(..., description="Target user uid to impersonate"),
     email: str = Query(..., description="Target user email to put in the token"),
-) -> TokenData:
+):
     """
     Generate a user access token for the provided uid and email (admin only). Token has scope 'me' and expires in 1 day.
+    Also sets impersonation cookie so subsequent requests act as that user until depersonate.
     """
     token = TokenRepository.create_impersonation_token(uid, email)
-    return TokenData(access_token=token)
+    response = JSONResponse(content=TokenData(access_token=token).model_dump())
+    response.set_cookie(impersonate_cookie_name, uid, **_impersonate_cookie_params())
+    return response
+
+
+@router.get(
+    "/tokens/depersonate",
+    responses={
+        204: {"description": "Impersonation cookie cleared"},
+        **UserWithoutSessionException.responses,
+    },
+    status_code=204,
+)
+async def depersonate_user(_user: UserDep):
+    """
+    Clear impersonation cookie; subsequent requests use the real session user.
+    """
+    params = _impersonate_cookie_params()
+    response = JSONResponse(content=None, status_code=204)
+    response.delete_cookie(
+        impersonate_cookie_name,
+        path=params["path"],
+        samesite=params["samesite"],
+        secure=params["secure"],
+        httponly=params["httponly"],
+    )
+    return response
 
 
 @router.get(

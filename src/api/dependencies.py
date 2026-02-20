@@ -1,13 +1,19 @@
-__all__ = ["UserIdDep", "OptionalUserIdDep", "UserDep", "AdminDep"]
+__all__ = ["UserIdDep", "OptionalUserIdDep", "UserDep", "AdminDep", "impersonate_cookie_name"]
 
 from typing import Annotated
 
 from beanie import PydanticObjectId
 from fastapi import Depends, Request
 
+from src.config import settings
+from src.config_schema import Environment
 from src.exceptions import NotEnoughPermissionsException, UserWithoutSessionException
 from src.modules.users.repository import user_repository
 from src.storages.mongo.models import User
+
+impersonate_cookie_name = (
+    "__Secure-accounts-impersonate" if settings.environment == Environment.PRODUCTION else "accounts-impersonate"
+)
 
 
 async def _get_uid_from_session(request: Request) -> PydanticObjectId:
@@ -18,8 +24,16 @@ async def _get_uid_from_session(request: Request) -> PydanticObjectId:
 
 
 async def _get_optional_uid_from_session(request: Request) -> PydanticObjectId | None:
-    uid = request.session.get("uid")
+    impersonate_uid = request.cookies.get(impersonate_cookie_name)
+    if impersonate_uid:
+        try:
+            uid = PydanticObjectId(impersonate_uid)
+            if await user_repository.exists(uid):
+                return uid
+        except Exception:
+            pass
 
+    uid = request.session.get("uid")
     if uid is None:
         return None
     uid = PydanticObjectId(uid)
@@ -34,6 +48,8 @@ async def _get_optional_uid_from_session(request: Request) -> PydanticObjectId |
 async def _get_user(request: Request) -> User:
     user_id = await _get_uid_from_session(request)
     user = await user_repository.read(user_id)
+    if user is None:
+        raise UserWithoutSessionException()
     return user
 
 
