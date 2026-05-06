@@ -17,7 +17,7 @@ router = APIRouter(prefix="/telegram")
 
 def _get_secret_key() -> bytes:
     bot_token: str = settings.telegram.bot_token.get_secret_value()
-    secret_key = hashlib.sha256(bot_token.encode("utf-8"))  # noqa: HL
+    secret_key = hashlib.sha256(bot_token.encode("utf-8"))
     return secret_key.digest()
 
 

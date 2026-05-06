@@ -55,17 +55,6 @@ class Authentication(SettingsEntityModel):
     "Secret key for sessions. Use 'openssl rand -hex 32' to generate keys"
 
 
-class SMTP(SettingsEntityModel):
-    host: str
-    "SMTP server host"
-    port: int = 587
-    "SMTP server port"
-    username: str
-    "SMTP server username"
-    password: SecretStr
-    "SMTP server password"
-
-
 class Mongo(SettingsEntityModel):
     uri: SecretStr
     "MongoDB database connection URI"
@@ -94,8 +83,6 @@ class Settings(SettingsEntityModel):
     "Telegram settings"
     accounts: Accounts | None = None
     "Use production InNoHassle Accounts API for authentication in local development"
-    smtp: SMTP | None = None
-    "SMTP settings"
 
     @classmethod
     def from_yaml(cls, path: Path) -> "Settings":

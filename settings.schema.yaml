@@ -109,34 +109,6 @@ $defs:
     - uri
     title: Mongo
     type: object
-  SMTP:
-    additionalProperties: false
-    properties:
-      host:
-        description: SMTP server host
-        title: Host
-        type: string
-      port:
-        default: 587
-        description: SMTP server port
-        title: Port
-        type: integer
-      username:
-        description: SMTP server username
-        title: Username
-        type: string
-      password:
-        description: SMTP server password
-        format: password
-        title: Password
-        type: string
-        writeOnly: true
-    required:
-    - host
-    - username
-    - password
-    title: SMTP
-    type: object
   Telegram:
     additionalProperties: false
     properties:
@@ -207,12 +179,6 @@ properties:
     default: null
     description: Use production InNoHassle Accounts API for authentication in local
       development
-  smtp:
-    anyOf:
-    - $ref: '#/$defs/SMTP'
-    - type: 'null'
-    default: null
-    description: SMTP settings
   $schema:
     description: Path to the schema file
     title: Schema
