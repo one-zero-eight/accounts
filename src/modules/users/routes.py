@@ -48,6 +48,7 @@ async def get_hint_on_type(_: UserIdDep, query: str = Query(min_length=3)) -> li
     """
     Suggest user on typing, for example when invite to event.
     """
+    raise NotImplementedError("Will be implemented later")
     users = await user_repository.search_by_query_with_rerank(query, limit=SUGGEST_ON_TYPING_LIMIT)
 
     return [view_from_user(u, include_update_data=False, include_deprecated_fields=False) for u in users]
