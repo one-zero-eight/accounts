@@ -2,7 +2,6 @@
 # https://github.com/one-zero-eight/accounts/blob/main/inh_accounts_sdk.py
 
 import datetime
-import time
 
 import httpx
 from authlib.jose import JsonWebKey, JWTClaims, KeySet, jwt
@@ -130,11 +129,9 @@ class InNoHassleAccounts:
         )
 
     def _get_jwt_claims(self, token: str) -> JWTClaims:
-        now = time.time()
         pub_key = self.get_public_key()
-        payload = jwt.decode(token, pub_key)
-        payload.validate_exp(now, leeway=0)
-        payload.validate_iat(now, leeway=0)
+        payload: JWTClaims = jwt.decode(token, pub_key)
+        payload.validate()
         return payload
 
     async def get_user(

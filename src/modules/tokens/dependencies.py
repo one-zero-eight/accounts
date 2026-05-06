@@ -30,7 +30,8 @@ async def verify_access_token(security_scopes: SecurityScopes, token: str | None
             headers={"WWW-Authenticate": authenticate_value},
         )
     try:
-        payload = jwt.decode(token, settings.auth.jwt_public_key)
+        payload: JWTClaims = jwt.decode(token, settings.auth.jwt_public_key)
+        payload.validate()
         scope_string = payload.get("scope", None)
         scopes = scope_string.split() if scope_string else []
         for scope in security_scopes.scopes:
