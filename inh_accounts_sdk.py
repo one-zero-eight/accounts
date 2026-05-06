@@ -6,7 +6,6 @@ import datetime
 import httpx
 from authlib.jose import JsonWebKey, JWTClaims, KeySet, jwt
 from authlib.jose.errors import JoseError
-from beanie import PydanticObjectId
 from pydantic import BaseModel, Field
 
 from src.config import settings
@@ -51,7 +50,7 @@ class TelegramWidgetData(BaseModel):
 
 
 class UserSchema(BaseModel):
-    id: PydanticObjectId
+    id: str
     innopolis_info: InnopolisInfo
     telegram_info: TelegramInfo | None = None
     innohassle_admin: bool = False
