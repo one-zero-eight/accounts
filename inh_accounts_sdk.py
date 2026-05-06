@@ -2,6 +2,7 @@
 # https://github.com/one-zero-eight/accounts/blob/main/inh_accounts_sdk.py
 
 import datetime
+import logging
 from typing import Any
 
 import httpx
@@ -113,17 +114,18 @@ class InNoHassleAccounts:
         """
         try:
             payload = self._get_jwt_claims(token)
-            innohassle_id: str = payload["uid"]
+            innohassle_id: str | None = payload.get("uid")
             email: str | None = payload.get("email")
             telegram_id: int | None = payload.get("telegram_id")
-            assert email is not None, "Token always have email"
+            if innohassle_id is None or email is None:
+                raise JoseError("Missing required claims: uid/email")
             return UserTokenData(
                 innohassle_id=innohassle_id,
                 email=email,
                 telegram_id=telegram_id,
             )
         except JoseError:
-            # logger.warning("Invalid token", exc_info=True)
+            logging.warning("Invalid token", exc_info=True)
             return None
 
     def get_authorized_client(self) -> httpx.AsyncClient:
