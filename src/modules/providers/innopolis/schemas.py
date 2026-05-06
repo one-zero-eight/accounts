@@ -22,10 +22,13 @@ class UserInfoFromSSO(BaseModel):
 
     @classmethod
     def from_token_and_userinfo(cls, token: dict, userinfo: dict) -> "UserInfoFromSSO":
-        status = userinfo.get("Status")
-        if isinstance(status, str):
-            status = [status]
-        status: list[str]
+        raw_status = userinfo.get("Status")
+        if isinstance(raw_status, str):
+            status: list[str] = [raw_status]
+        elif isinstance(raw_status, list):
+            status = [s for s in raw_status if isinstance(s, str)]
+        else:
+            status = []
         is_student = is_staff = is_college = False
         if status:
             if "Student" in status:
