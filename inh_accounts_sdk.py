@@ -10,7 +10,7 @@ from joserfc import jwt
 from joserfc.errors import JoseError
 from joserfc.jwk import RSAKey
 from joserfc.jwt import JWTClaimsRegistry
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from src.config import settings
 
@@ -33,42 +33,11 @@ class InnopolisInfo(BaseModel):
     updated_at: datetime.datetime
 
 
-class UserInfoFromSSO(BaseModel):
-    email: str
-    name: str | None = None
-
-    issued_at: datetime.datetime | None = None
-    is_student: bool = False
-    is_staff: bool = False
-    is_college: bool = False
-    group: str | None = None
-
-
-class TelegramWidgetData(BaseModel):
-    id: int
-    auth_date: int
-    first_name: str
-    last_name: str | None = None
-    username: str | None = None
-    photo_url: str | None = None
-
-
 class UserSchema(BaseModel):
     id: str
     innopolis_info: InnopolisInfo
     telegram_info: TelegramInfo | None = None
     innohassle_admin: bool = False
-
-    innopolis_sso: UserInfoFromSSO | None = Field(
-        None,
-        deprecated=True,
-        description="Deprecated field, use `innopolis_info` instead, dont trust data from `innopolis_sso`",
-    )
-    telegram: TelegramWidgetData | None = Field(
-        None,
-        deprecated=True,
-        description="Deprecated field, use `telegram_info` instead",
-    )
 
 
 class UserTokenData(BaseModel):
