@@ -8,7 +8,7 @@ from beanie import PydanticObjectId
 from fastapi import APIRouter, Body, Query, Request, Security
 
 from src.api import docs
-from src.api.dependencies import UserIdDep
+from src.api.dependencies import AdminDep, UserIdDep
 from src.exceptions import NotEnoughPermissionsException, ObjectNotFound, UserWithoutSessionException
 from src.modules.tokens.dependencies import verify_access_token, verify_access_token_responses
 from src.modules.users.repository import user_repository
@@ -44,11 +44,10 @@ SUGGEST_ON_TYPING_LIMIT = 10
     "/suggest-user-on-typing",
     responses={200: {"description": "Hint on type"}, **verify_access_token_responses},
 )
-async def get_hint_on_type(_: UserIdDep, query: str = Query(min_length=3)) -> list[ViewUser]:
+async def get_hint_on_type(_: AdminDep, query: str = Query(min_length=3)) -> list[ViewUser]:
     """
     Suggest user on typing, for example when invite to event.
     """
-    raise NotImplementedError("Will be implemented later")
     users = await user_repository.search_by_query_with_rerank(query, limit=SUGGEST_ON_TYPING_LIMIT)
 
     return [view_from_user(u, include_update_data=False, include_deprecated_fields=False) for u in users]
