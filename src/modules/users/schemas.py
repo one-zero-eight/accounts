@@ -1,7 +1,7 @@
 import datetime
 
 from beanie import PydanticObjectId
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_serializer
 
 from src.modules.providers.innopolis.schemas import UserInfoFromSSO
 from src.modules.providers.telegram.schemas import TelegramWidgetData
@@ -51,6 +51,12 @@ class ViewUser(BaseModel):
         deprecated=True,
         description="Deprecated field, use `telegram_info` instead",
     )
+
+    @field_serializer("innopolis_sso")
+    def serialize_innopolis_sso(self, value: UserInfoFromSSO | None):
+        if value is None:
+            return None
+        return value.model_dump(exclude={"access_token", "refresh_token"})
 
 
 def view_from_user(user: User, include_update_data: bool = True, include_deprecated_fields: bool = True) -> "ViewUser":
