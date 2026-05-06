@@ -3,8 +3,9 @@ __all__ = ["TokenRepository"]
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
-from authlib.jose import JsonWebKey, jwt
 from beanie import PydanticObjectId
+from joserfc import jwt
+from joserfc.jwk import RSAKey
 
 from src.config import settings
 from src.storages.mongo.models import User
@@ -12,6 +13,8 @@ from src.storages.mongo.models import User
 
 class TokenRepository:
     ALGORITHM = "RS256"
+    private_jwt_key = RSAKey.import_key(settings.auth.jwt_private_key.get_secret_value())
+    public_jwt_key = RSAKey.import_key(settings.auth.jwt_public_key)
 
     @classmethod
     def _create_token(
@@ -25,8 +28,8 @@ class TokenRepository:
             payload["scope"] = " ".join(scopes)
         if aud:
             payload["aud"] = aud
-        encoded_jwt = jwt.encode({"alg": cls.ALGORITHM}, payload, settings.auth.jwt_private_key.get_secret_value())
-        return str(encoded_jwt, "utf-8")
+        encoded_jwt = jwt.encode({"alg": cls.ALGORITHM}, payload, cls.private_jwt_key)
+        return encoded_jwt.decode("utf-8") if isinstance(encoded_jwt, bytes) else encoded_jwt
 
     @classmethod
     def _generate_user_payload(cls, user: User) -> dict:
@@ -71,7 +74,4 @@ class TokenRepository:
 
     @classmethod
     def get_jwks(cls) -> dict:
-        jwk = JsonWebKey.import_key(
-            settings.auth.jwt_public_key, {"kty": "RSA", "alg": "RS256", "use": "sig", "kid": "public"}
-        )
-        return {"keys": [jwk.as_dict()]}
+        return {"keys": [cls.public_jwt_key.as_dict(private=False)]}

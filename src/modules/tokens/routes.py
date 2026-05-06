@@ -6,9 +6,8 @@ You can analyze JWT token at [jwt.io](https://jwt.io/).
 
 import time
 from enum import StrEnum
-from typing import Annotated
+from typing import Annotated, Any
 
-from authlib.jose import JWTClaims
 from beanie import PydanticObjectId
 from fastapi import APIRouter, Query, Request, Security
 from pydantic import BaseModel
@@ -110,7 +109,7 @@ async def generate_service_token(
     return TokenData(access_token=token)
 
 
-def _allowed_user_id_for_jwt_claims(user_id: PydanticObjectId, jwt_claims: JWTClaims) -> bool:
+def _allowed_user_id_for_jwt_claims(user_id: PydanticObjectId, jwt_claims: dict[str, Any]) -> bool:
     scope_string = jwt_claims.get("scope", "")
     scopes = scope_string.split() if scope_string else []
     sport_scopes = [scope for scope in scopes if scope.startswith("sport")]
@@ -123,7 +122,7 @@ def _allowed_user_id_for_jwt_claims(user_id: PydanticObjectId, jwt_claims: JWTCl
     return False
 
 
-SportScopeDep = Annotated[JWTClaims, Security(verify_access_token, scopes=["sport"])]
+SportScopeDep = Annotated[dict[str, Any], Security(verify_access_token, scopes=["sport"])]
 
 
 @router.get(

@@ -19,6 +19,7 @@ dependencies = [
     "itsdangerous>=2.1.2",
     "prek>=0.3.13",
     "pydantic[email]>=2.13.4",
+    "joserfc>=1.4.1",
     "python-multipart>=0.0.27",
     "pyyaml>=6.0.1",
     "rapidfuzz>=3.14.5",

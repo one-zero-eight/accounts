@@ -1,6 +1,11 @@
-from authlib.jose import JoseError, JWTClaims, jwt
+from typing import Any
+
 from fastapi import Depends, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer, SecurityScopes
+from joserfc import jwt
+from joserfc.errors import JoseError
+from joserfc.jwk import RSAKey
+from joserfc.jwt import JWTClaimsRegistry
 from starlette import status
 
 from src.config import settings
@@ -11,13 +16,16 @@ bearer_scheme = HTTPBearer(
     bearerFormat="JWT",
     auto_error=False,  # We'll handle error manually
 )
+public_jwt_key = RSAKey.import_key(settings.auth.jwt_public_key)
 
 
 async def get_token(bearer: HTTPAuthorizationCredentials | None = Depends(bearer_scheme)) -> str | None:
     return bearer and bearer.credentials
 
 
-async def verify_access_token(security_scopes: SecurityScopes, token: str | None = Depends(get_token)) -> JWTClaims:
+async def verify_access_token(
+    security_scopes: SecurityScopes, token: str | None = Depends(get_token)
+) -> dict[str, Any]:
     if security_scopes.scopes:
         authenticate_value = f'Bearer scope="{security_scopes.scope_str}"'
     else:
@@ -30,9 +38,10 @@ async def verify_access_token(security_scopes: SecurityScopes, token: str | None
             headers={"WWW-Authenticate": authenticate_value},
         )
     try:
-        payload: JWTClaims = jwt.decode(token, settings.auth.jwt_public_key)
-        payload.validate()
-        scope_string = payload.get("scope", None)
+        payload = jwt.decode(token, public_jwt_key)
+        claims = payload.claims
+        JWTClaimsRegistry().validate(claims)
+        scope_string = claims.get("scope", None)
         scopes = scope_string.split() if scope_string else []
         for scope in security_scopes.scopes:
             by_prefix = ["users", "sport"]
@@ -58,7 +67,7 @@ async def verify_access_token(security_scopes: SecurityScopes, token: str | None
             detail="Could not validate credentials",
             headers={"WWW-Authenticate": authenticate_value},
         )
-    return payload
+    return claims
 
 
 verify_access_token_responses = {

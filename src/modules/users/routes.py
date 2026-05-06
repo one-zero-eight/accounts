@@ -2,9 +2,8 @@
 User data and linking users with event groups.
 """
 
-from typing import Annotated
+from typing import Annotated, Any
 
-from authlib.jose import JWTClaims
 from beanie import PydanticObjectId
 from fastapi import APIRouter, Body, Query, Request, Security
 
@@ -19,7 +18,7 @@ router = APIRouter(prefix="/users", tags=["Users"])
 docs.TAGS_INFO.append({"description": __doc__, "name": str(router.tags[0])})
 
 
-UsersScopeDep = Annotated[JWTClaims, Security(verify_access_token, scopes=["users"])]
+UsersScopeDep = Annotated[dict[str, Any], Security(verify_access_token, scopes=["users"])]
 
 
 @router.get(
@@ -55,7 +54,7 @@ async def get_hint_on_type(_: UserIdDep, query: str = Query(min_length=3)) -> li
 
 
 def allowed_user_id_for_jwt_claims(
-    user_id: PydanticObjectId | list[PydanticObjectId] | None, jwt_claims: JWTClaims
+    user_id: PydanticObjectId | list[PydanticObjectId] | None, jwt_claims: dict[str, Any]
 ) -> bool:
     scope_string = jwt_claims.get("scope", "")
     scopes = scope_string.split() if scope_string else []
