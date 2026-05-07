@@ -33,27 +33,27 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "aiolimiter", specifier = ">=1.2.0" },
+    { name = "aiolimiter", specifier = ">=1.2.1" },
     { name = "authlib", specifier = ">=1.7.2" },
     { name = "beanie", specifier = ">=1.30.0,<2.0.0" },
-    { name = "colorlog", specifier = ">=6.8.2" },
+    { name = "colorlog", specifier = ">=6.10.1" },
     { name = "fastapi", specifier = ">=0.136.1" },
     { name = "fastapi-swagger", specifier = ">=0.4.49" },
     { name = "gunicorn", specifier = "==23.0.0" },
-    { name = "httpx", specifier = ">=0.27.0" },
-    { name = "itsdangerous", specifier = ">=2.1.2" },
-    { name = "joserfc", specifier = ">=1.4.1" },
+    { name = "httpx", specifier = ">=0.28.1" },
+    { name = "itsdangerous", specifier = ">=2.2.0" },
+    { name = "joserfc", specifier = ">=1.6.5" },
     { name = "prek", specifier = ">=0.3.13" },
     { name = "pydantic", extras = ["email"], specifier = ">=2.13.4" },
     { name = "python-multipart", specifier = ">=0.0.27" },
-    { name = "pyyaml", specifier = ">=6.0.1" },
+    { name = "pyyaml", specifier = ">=6.0.3" },
     { name = "rapidfuzz", specifier = ">=3.14.5" },
     { name = "ruff", specifier = ">=0.15.12" },
     { name = "uvicorn", specifier = ">=0.46.0" },
 ]
 
 [package.metadata.requires-dev]
-dev = [{ name = "pytest", specifier = ">=9.0.2" }]
+dev = [{ name = "pytest", specifier = ">=9.0.3" }]
 
 [[package]]
 name = "aiolimiter"
