@@ -67,4 +67,4 @@ class TokenRepository:
 
     @classmethod
     def get_jwks(cls) -> dict:
-        return {"keys": [cls.public_jwt_key.as_dict(private=False)]}
+        return {"keys": [cls.public_jwt_key.as_dict(private=False, kid="public")]}
