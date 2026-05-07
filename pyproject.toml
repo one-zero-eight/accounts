@@ -10,11 +10,11 @@ requires-python = ">=3.13,<3.14"
 dependencies = [
     "aiolimiter>=1.2.1",
     "authlib>=1.7.2",
-    "beanie>=1.30.0,<2.0.0",
+    "beanie>=2.1.0,<3.0.0",
     "colorlog>=6.10.1",
     "fastapi>=0.136.1",
     "fastapi-swagger>=0.4.49",
-    "gunicorn==23.0.0",
+    "gunicorn==26.0.0",
     "httpx>=0.28.1",
     "itsdangerous>=2.2.0",
     "prek>=0.3.13",
