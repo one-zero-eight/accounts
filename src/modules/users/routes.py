@@ -4,8 +4,9 @@ User data and linking users with event groups.
 
 from typing import Annotated, Any
 
+import httpx
 from beanie import PydanticObjectId
-from fastapi import APIRouter, Body, Query, Request, Security
+from fastapi import APIRouter, Body, Query, Request, Response, Security
 
 from src.api import docs
 from src.api.dependencies import AdminDep, UserIdDep
@@ -35,6 +36,50 @@ async def get_me(user_id: UserIdDep, request: Request) -> ViewUser:
         request.session.clear()
         raise UserWithoutSessionException()
     return view_from_user(user)
+
+
+@router.get(
+    "/me/avatar.jpg",
+    responses={
+        200: {"description": "Avatar for the current user", "content": {"image/*": {}}},
+        **UserWithoutSessionException.responses,
+        **ObjectNotFound.responses,
+    },
+)
+async def get_avatar(user_id: UserIdDep, request: Request) -> Response:
+    """
+    Get current user's Telegram avatar. We proxy the request through our server
+    because Telegram CDN URLs may be blocked in some networks.
+    """
+    user = await user_repository.read(user_id)
+    if user is None:
+        # clear session cookie if user is not found
+        request.session.clear()
+        raise UserWithoutSessionException()
+
+    if not user.telegram or not user.telegram.photo_url:
+        raise ObjectNotFound("User has no photo")
+
+    client = request.app.state.client
+
+    try:
+        response = await client.get(user.telegram.photo_url)
+    except httpx.HTTPError:
+        raise ObjectNotFound("Failed to fetch avatar")
+
+    if response.status_code != 200:
+        raise ObjectNotFound("Avatar not available")
+
+    content_type = response.headers.get("content-type", "")
+    content_type = content_type.split(";")[0].strip()
+    if not content_type.startswith("image/"):
+        content_type = "image/jpeg"
+
+    return Response(
+        content=response.content,
+        media_type=content_type,
+        headers={"Cache-Control": "private, max-age=300"},
+    )
 
 
 SUGGEST_ON_TYPING_LIMIT = 10
