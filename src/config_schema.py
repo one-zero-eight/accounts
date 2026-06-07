@@ -81,6 +81,8 @@ class Settings(SettingsEntityModel):
     "Innopolis SSO settings (only for production)"
     telegram: Telegram | None = None
     "Telegram settings"
+    proxy_url: str | None = None
+    "Proxy for telegram"
     accounts: Accounts | None = None
     "Use production InNoHassle Accounts API for authentication in local development"
 
