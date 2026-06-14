@@ -172,6 +172,13 @@ properties:
     - type: 'null'
     default: null
     description: Telegram settings
+  proxy_url:
+    anyOf:
+    - type: string
+    - type: 'null'
+    default: null
+    description: Proxy for telegram
+    title: Proxy Url
   accounts:
     anyOf:
     - $ref: '#/$defs/Accounts'

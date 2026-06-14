@@ -3,6 +3,7 @@ __all__ = ["lifespan"]
 import asyncio
 from contextlib import asynccontextmanager
 
+import httpx
 from beanie import init_beanie
 from fastapi import FastAPI
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -51,15 +52,24 @@ async def setup_repositories() -> AsyncIOMotorClient:
 
 
 @asynccontextmanager
-async def lifespan(_app: FastAPI):
+async def lifespan(app: FastAPI):
     # Application startup
 
     motor_client = await setup_repositories()
 
     # Start daily loop update telegram info
     daily_task = asyncio.create_task(daily_loop_update_telegram_info())
+    if settings.proxy_url:
+        transport = httpx.AsyncHTTPTransport(proxy=settings.proxy_url)
+    else:
+        transport = None
+
+    client = httpx.AsyncClient(transport=transport, timeout=8.0, follow_redirects=True)
+    app.state.client = client
 
     yield
+
+    await client.aclose()
 
     # Application shutdown
     daily_task.cancel()
