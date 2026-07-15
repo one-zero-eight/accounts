@@ -66,5 +66,11 @@ class TokenRepository:
         return access_token
 
     @classmethod
+    def create_room_tv_token(cls, room_id: str) -> str:
+        data = {"room_id": room_id}
+        access_token = TokenRepository._create_token(data=data, expires_delta=timedelta(days=3650), aud="room-booking")
+        return access_token
+
+    @classmethod
     def get_jwks(cls) -> dict:
         return {"keys": [cls.public_jwt_key.as_dict(private=False, kid="public")]}

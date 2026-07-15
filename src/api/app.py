@@ -56,8 +56,10 @@ from src.modules.users.routes import router as router_users  # noqa: E402, I001
 from src.modules.providers.routes import router as router_providers  # noqa: E402, I001
 from src.modules.logout import router as router_logout  # noqa: E402, I001
 from src.modules.tokens.routes import router as router_tokens  # noqa: E402, I001
+from src.modules.rooms.routes import router as router_rooms  # noqa: E402, I001
 
 app.include_router(router_users)
 app.include_router(router_providers)
 app.include_router(router_logout)
 app.include_router(router_tokens)
+app.include_router(router_rooms)
