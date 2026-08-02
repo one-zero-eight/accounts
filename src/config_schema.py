@@ -73,7 +73,7 @@ class Settings(SettingsEntityModel):
     "MongoDB settings"
     web_url: str
     "Web URL for the frontend part of InNoHassle-Accounts"
-    cors_allow_origins_regex: str = r"^(https://innohassle\.ru|https://\w+\.innohassle\.ru|https://local\.innohassle\.ru(:30[0-9][0-9])?|http://localhost(:30[0-9][0-9])?):http://127\.0\.0\.1(:30[0-9][0-9])?)$"
+    cors_allow_origins_regex: str = r"^(https://innohassle\.ru|https://\w+\.innohassle\.ru|https://local\.innohassle\.ru(:30[0-9][0-9])?|http://localhost(:30[0-9][0-9])?:http://127\.0\.0\.1(:30[0-9][0-9])?)$"
     "Allowed origins for CORS: from which domains requests to the API are allowed"
     auth: Authentication
     "Authentication settings"

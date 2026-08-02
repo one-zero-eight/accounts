@@ -147,7 +147,7 @@ properties:
     title: Web Url
     type: string
   cors_allow_origins_regex:
-    default: ^(https://innohassle\.ru|https://\w+\.innohassle\.ru|https://local\.innohassle\.ru(:30[0-9][0-9])?|http://localhost(:30[0-9][0-9])?):http://127\.0\.0\.1(:30[0-9][0-9])?)$
+    default: ^(https://innohassle\.ru|https://\w+\.innohassle\.ru|https://local\.innohassle\.ru(:30[0-9][0-9])?|http://localhost(:30[0-9][0-9])?:http://127\.0\.0\.1(:30[0-9][0-9])?)$
     description: 'Allowed origins for CORS: from which domains requests to the API
       are allowed'
     title: Cors Allow Origins Regex
