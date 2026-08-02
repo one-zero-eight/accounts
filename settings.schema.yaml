@@ -146,17 +146,12 @@ properties:
     description: Web URL for the frontend part of InNoHassle-Accounts
     title: Web Url
     type: string
-  cors_allow_origins:
-    default:
-    - https://innohassle.ru
-    - https://pre.innohassle.ru
-    - http://localhost:3000
+  cors_allow_origins_regex:
+    default: ^(https://innohassle\.ru|https://\w+\.innohassle\.ru|https://local\.innohassle\.ru(:30[0-9][0-9])?|http://localhost(:30[0-9][0-9])?):http://127\.0\.0\.1(:30[0-9][0-9])?)$
     description: 'Allowed origins for CORS: from which domains requests to the API
       are allowed'
-    items:
-      type: string
-    title: Cors Allow Origins
-    type: array
+    title: Cors Allow Origins Regex
+    type: string
   auth:
     $ref: '#/$defs/Authentication'
     description: Authentication settings
