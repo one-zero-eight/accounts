@@ -1,4 +1,4 @@
-__all__ = ["TokenRepository"]
+__all__ = ["ServiceTokenExpiration", "TokenRepository"]
 
 from datetime import UTC, datetime, timedelta
 from typing import Any
@@ -7,6 +7,7 @@ from joserfc import jwt
 from joserfc.jwk import RSAKey
 
 from src.config import settings
+from src.modules.tokens.expiration import ServiceTokenExpiration, resolve_service_token_expiration
 from src.storages.mongo.models import User
 
 
@@ -17,11 +18,23 @@ class TokenRepository:
 
     @classmethod
     def _create_token(
-        cls, data: dict, expires_delta: timedelta, scopes: list[str] | None = None, aud: str | None = None
+        cls,
+        data: dict,
+        *,
+        expires_delta: timedelta | None = None,
+        expires_at: datetime | None = None,
+        scopes: list[str] | None = None,
+        aud: str | None = None,
     ) -> str:
+        if (expires_delta is None) == (expires_at is None):
+            raise ValueError("Provide exactly one of expires_delta or expires_at")
         payload = data.copy()
         issued_at = datetime.now(UTC)
-        expire = issued_at + expires_delta
+        if expires_at is not None:
+            expire = expires_at
+        else:
+            assert expires_delta is not None
+            expire = issued_at + expires_delta
         payload.update({"exp": expire, "iat": issued_at})
         if scopes:
             payload["scope"] = " ".join(scopes)
@@ -40,9 +53,15 @@ class TokenRepository:
         return data
 
     @classmethod
-    def create_access_token(cls, sub: Any, scopes: list[str] | None) -> str:
+    def create_access_token(
+        cls,
+        sub: Any,
+        scopes: list[str] | None,
+        expiration: ServiceTokenExpiration = ServiceTokenExpiration.auto,
+    ) -> str:
         data = {"sub": str(sub)}
-        access_token = TokenRepository._create_token(data=data, expires_delta=timedelta(days=90), scopes=scopes)
+        expires_at = resolve_service_token_expiration(expiration)
+        access_token = TokenRepository._create_token(data=data, expires_at=expires_at, scopes=scopes)
         return access_token
 
     @classmethod

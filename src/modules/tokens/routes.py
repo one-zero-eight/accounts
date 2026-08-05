@@ -16,6 +16,7 @@ from src.api import docs
 from src.api.dependencies import IMPERSONATE_MAX_AGE_SEC, AdminDep, UserDep
 from src.exceptions import InvalidScope, NotEnoughPermissionsException, ObjectNotFound, UserWithoutSessionException
 from src.modules.tokens.dependencies import verify_access_token
+from src.modules.tokens.expiration import ServiceTokenExpiration
 from src.modules.tokens.repository import TokenRepository
 from src.modules.users.repository import user_repository
 
@@ -88,9 +89,21 @@ async def generate_service_token(
         True,
         description="Generate token only for current user - other users will be marked as not existing in the system",
     ),
+    expiration: ServiceTokenExpiration = Query(
+        ServiceTokenExpiration.auto,
+        description=(
+            "Token expiration policy. "
+            "`auto` (default): nearest 14 August if more than a month away, otherwise next 14 August. "
+            "`nearest-14-august` / `next-14-august`: fixed Aug 14 targets. "
+            "`in-3-month`: expire in 90 days."
+        ),
+    ),
 ) -> TokenData:
     """
-    Generate access token for access users-related endpoints (/users/*), expires in 90 days
+    Generate access token for access users-related endpoints (/users/*).
+
+    By default expires on the nearest 14 August if that is more than a month away,
+    otherwise on the next 14 August (so yearly tokens rotate on the same date).
     """
     _scopes = []
 
@@ -105,7 +118,7 @@ async def generate_service_token(
         else:
             raise InvalidScope(f"Invalid scope: {scope}")
 
-    token = TokenRepository.create_access_token(sub, _scopes)
+    token = TokenRepository.create_access_token(sub, _scopes, expiration=expiration)
     return TokenData(access_token=token)
 
 
@@ -209,9 +222,14 @@ async def generate_token(
     _user: AdminDep,
     sub: str = Query(examples=["parser"]),
     scope: str | None = Query(None, description="Space delimited list of scopes"),
+    expiration: ServiceTokenExpiration = Query(
+        ServiceTokenExpiration.auto,
+        description="Token expiration policy (same as generate-service-token)",
+    ),
 ) -> TokenData:
     """
-    Generate arbitrary access token with some sub in `sub` field (f.e. parser), expires in 90 days, only for admins
+    Generate arbitrary access token with some sub in `sub` field (f.e. parser), only for admins.
+    Expiration follows the same policy as generate-service-token (default: auto → Aug 14).
     """
-    token = TokenRepository.create_access_token(sub, scope.split(" ") if scope else None)
+    token = TokenRepository.create_access_token(sub, scope.split(" ") if scope else None, expiration=expiration)
     return TokenData(access_token=token)
