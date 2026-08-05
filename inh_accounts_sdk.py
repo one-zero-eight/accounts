@@ -1,8 +1,10 @@
-# This file should be synced with:
-# https://github.com/one-zero-eight/accounts/blob/main/inh_accounts_sdk.py
+# This file should be synced with monorepo `src/inh_accounts_sdk.py` (shared client surface).
+# Keep inh_accounts_jwks.json in sync with /.well-known/jwks.json (public keys only).
 
 import datetime
+import json
 import logging
+from pathlib import Path
 from typing import Any
 
 import httpx
@@ -13,6 +15,13 @@ from joserfc.jwt import JWTClaimsRegistry
 from pydantic import BaseModel
 
 from src.config import settings
+
+_FALLBACK_JWKS_PATH = Path(__file__).resolve().with_name("inh_accounts_jwks.json")
+
+
+def _load_committed_jwks() -> dict[str, Any]:
+    with open(_FALLBACK_JWKS_PATH, encoding="utf-8") as f:
+        return json.load(f)
 
 
 class TelegramInfo(BaseModel):
@@ -68,7 +77,16 @@ class InNoHassleAccounts:
             )
 
     async def update_key_set(self):
-        self.key_set = await self.get_key_set()
+        try:
+            self.key_set = await self.get_key_set()
+        except (httpx.HTTPError, json.JSONDecodeError, ValueError):
+            logging.warning(
+                "Failed to fetch JWKS from %s; using committed fallback %s",
+                f"{self.api_url}/.well-known/jwks.json",
+                _FALLBACK_JWKS_PATH,
+                exc_info=True,
+            )
+            self.key_set = _load_committed_jwks()
 
     def get_public_key(self) -> RSAKey:
         if self.key_set is None:
