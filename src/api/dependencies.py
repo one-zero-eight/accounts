@@ -59,6 +59,16 @@ async def _get_admin_dep(user: User = Depends(_get_user)) -> User:
     return user
 
 
+async def get_optional_admin_from_session(request: Request) -> User | None:
+    uid = await _get_optional_uid_from_session(request)
+    if uid is None:
+        return None
+    user = await user_repository.read(uid)
+    if user is None or not user.is_admin:
+        return None
+    return user
+
+
 UserIdDep = Annotated[PydanticObjectId, Depends(_get_uid_from_session)]
 OptionalUserIdDep = Annotated[PydanticObjectId | None, Depends(_get_optional_uid_from_session, use_cache=False)]
 UserDep = Annotated[User, Depends(_get_user)]

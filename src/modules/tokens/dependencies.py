@@ -1,13 +1,15 @@
 from typing import Any
 
-from fastapi import Depends, HTTPException
+from fastapi import Depends, HTTPException, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer, SecurityScopes
 from joserfc import jwt
 from joserfc.errors import JoseError
 from joserfc.jwk import RSAKey
 from joserfc.jwt import JWTClaimsRegistry
+from pydantic import BaseModel
 from starlette import status
 
+from src.api.dependencies import get_optional_admin_from_session
 from src.config import settings
 
 bearer_scheme = HTTPBearer(
@@ -68,6 +70,24 @@ async def verify_access_token(
             headers={"WWW-Authenticate": authenticate_value},
         )
     return claims
+
+
+class UsersAccess(BaseModel):
+    is_admin: bool
+    jwt_claims: dict[str, Any]
+
+
+async def verify_users_scope_or_admin(
+    request: Request,
+    security_scopes: SecurityScopes,
+    token: str | None = Depends(get_token),
+) -> UsersAccess:
+    if await get_optional_admin_from_session(request) is not None:
+        return UsersAccess(is_admin=True, jwt_claims={})
+    return UsersAccess(
+        is_admin=False,
+        jwt_claims=await verify_access_token(security_scopes, token),
+    )
 
 
 verify_access_token_responses = {

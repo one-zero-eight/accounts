@@ -2,7 +2,7 @@
 User data and linking users with event groups.
 """
 
-from typing import Annotated, Any
+from typing import Annotated
 
 import httpx
 from beanie import PydanticObjectId
@@ -11,7 +11,7 @@ from fastapi import APIRouter, Body, Query, Request, Response, Security
 from src.api import docs
 from src.api.dependencies import AdminDep, UserIdDep
 from src.exceptions import NotEnoughPermissionsException, ObjectNotFound, UserWithoutSessionException
-from src.modules.tokens.dependencies import verify_access_token, verify_access_token_responses
+from src.modules.tokens.dependencies import UsersAccess, verify_access_token_responses, verify_users_scope_or_admin
 from src.modules.users.repository import user_repository
 from src.modules.users.schemas import ViewUser, view_from_user
 
@@ -19,7 +19,7 @@ router = APIRouter(prefix="/users", tags=["Users"])
 docs.TAGS_INFO.append({"description": __doc__, "name": str(router.tags[0])})
 
 
-UsersScopeDep = Annotated[dict[str, Any], Security(verify_access_token, scopes=["users"])]
+UsersScopeOrAdminDep = Annotated[UsersAccess, Security(verify_users_scope_or_admin, scopes=["users"])]
 
 
 @router.get(
@@ -99,8 +99,12 @@ async def get_hint_on_type(_: AdminDep, query: str = Query(min_length=3)) -> lis
 
 
 def allowed_user_id_for_jwt_claims(
-    user_id: PydanticObjectId | list[PydanticObjectId] | None, jwt_claims: dict[str, Any]
+    user_id: PydanticObjectId | list[PydanticObjectId] | None, access: UsersAccess
 ) -> bool:
+    if access.is_admin:
+        return True
+
+    jwt_claims = access.jwt_claims
     scope_string = jwt_claims.get("scope", "")
     scopes = scope_string.split() if scope_string else []
     users_scopes = [scope for scope in scopes if scope.startswith("users")]
@@ -120,13 +124,13 @@ def allowed_user_id_for_jwt_claims(
     "/by-telegram-id/{telegram_id}",
     responses={200: {"description": "User info"}, **ObjectNotFound.responses, **verify_access_token_responses},
 )
-async def get_user_by_telegram_id(telegram_id: int, jwt_claims: UsersScopeDep) -> ViewUser:
+async def get_user_by_telegram_id(telegram_id: int, access: UsersScopeOrAdminDep) -> ViewUser:
     """
     Get user by telegram id
     """
 
     user = await user_repository.read_by_telegram_id(telegram_id)
-    if user is None or not allowed_user_id_for_jwt_claims(user.id, jwt_claims):
+    if user is None or not allowed_user_id_for_jwt_claims(user.id, access):
         raise ObjectNotFound("User not found")
 
     return view_from_user(user)
@@ -142,12 +146,12 @@ async def get_user_by_telegram_id(telegram_id: int, jwt_claims: UsersScopeDep) -
     },
 )
 async def get_bulk_users_by_id(
-    jwt_claims: UsersScopeDep, user_ids: list[PydanticObjectId] = Body(min_items=1)
+    access: UsersScopeOrAdminDep, user_ids: list[PydanticObjectId] = Body(min_items=1)
 ) -> dict[PydanticObjectId, ViewUser | None]:
     """
     Get user by id
     """
-    if not allowed_user_id_for_jwt_claims(user_ids, jwt_claims):
+    if not allowed_user_id_for_jwt_claims(user_ids, access):
         raise NotEnoughPermissionsException("Not enough permissions")
 
     users = await user_repository.read_bulk(user_ids)
@@ -162,11 +166,11 @@ async def get_bulk_users_by_id(
         **verify_access_token_responses,
     },
 )
-async def get_user_by_id(user_id: PydanticObjectId, jwt_claims: UsersScopeDep) -> ViewUser:
+async def get_user_by_id(user_id: PydanticObjectId, access: UsersScopeOrAdminDep) -> ViewUser:
     """
     Get user by id
     """
-    if not allowed_user_id_for_jwt_claims(user_id, jwt_claims):
+    if not allowed_user_id_for_jwt_claims(user_id, access):
         raise ObjectNotFound("User not found because of insufficient permissions")
     user = await user_repository.read(user_id)
     if user is None:
@@ -184,7 +188,7 @@ async def get_user_by_id(user_id: PydanticObjectId, jwt_claims: UsersScopeDep) -
     },
 )
 async def get_bulk_users_by_innomail(
-    jwt_claims: UsersScopeDep, emails: list[str] = Body(min_length=1)
+    access: UsersScopeOrAdminDep, emails: list[str] = Body(min_length=1)
 ) -> dict[str, ViewUser | None]:
     """
     Get users by email
@@ -192,7 +196,7 @@ async def get_bulk_users_by_innomail(
 
     users = await user_repository.read_by_innomail_bulk(emails)
     user_ids = [user.id for user in users.values() if user is not None]
-    if not allowed_user_id_for_jwt_claims(user_ids, jwt_claims):
+    if not allowed_user_id_for_jwt_claims(user_ids, access):
         raise NotEnoughPermissionsException("Not enough permissions")
     return {
         email: view_from_user(
@@ -214,11 +218,11 @@ async def get_bulk_users_by_innomail(
         **verify_access_token_responses,
     },
 )
-async def get_user_by_innomail(email: str, jwt_claims: UsersScopeDep) -> ViewUser:
+async def get_user_by_innomail(email: str, access: UsersScopeOrAdminDep) -> ViewUser:
     """
     Get user by email
     """
     user = await user_repository.read_by_innomail(email)
-    if user is None or not allowed_user_id_for_jwt_claims(user.id, jwt_claims):
+    if user is None or not allowed_user_id_for_jwt_claims(user.id, access):
         raise ObjectNotFound("User not found")
     return view_from_user(user)
