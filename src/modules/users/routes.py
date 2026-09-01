@@ -6,20 +6,21 @@ from typing import Annotated
 
 import httpx
 from beanie import PydanticObjectId
-from fastapi import APIRouter, Body, Query, Request, Response, Security
+from fastapi import APIRouter, Body, Depends, Query, Request, Response, Security
 
 from src.api import docs
 from src.api.dependencies import AdminDep, UserIdDep
 from src.exceptions import NotEnoughPermissionsException, ObjectNotFound, UserWithoutSessionException
 from src.modules.tokens.dependencies import UsersAccess, verify_access_token_responses, verify_users_scope_or_admin
 from src.modules.users.repository import user_repository
-from src.modules.users.schemas import ViewUser, view_from_user
+from src.modules.users.schemas import BulkExportUser, ViewUser, view_from_user
 
 router = APIRouter(prefix="/users", tags=["Users"])
 docs.TAGS_INFO.append({"description": __doc__, "name": str(router.tags[0])})
 
 
 UsersScopeOrAdminDep = Annotated[UsersAccess, Security(verify_users_scope_or_admin, scopes=["users"])]
+MyUniOrAdminDep = Annotated[UsersAccess, Depends(verify_users_scope_or_admin)]
 
 
 @router.get(
@@ -118,6 +119,21 @@ def allowed_user_id_for_jwt_claims(
             return all(f"users:{user_id_item}" in users_scopes for user_id_item in user_id)
 
     return False
+
+
+@router.get(
+    "/bulk-export-for-my-uni",
+    responses={
+        200: {"description": "All users for My Uni"},
+        **NotEnoughPermissionsException.responses,
+        **verify_access_token_responses,
+    },
+)
+async def bulk_export_for_my_uni(access: MyUniOrAdminDep) -> list[BulkExportUser]:
+    if access.is_admin or access.jwt_claims.get("sub") == "my-uni":
+        return await user_repository.read_all_for_my_uni_export()
+
+    raise NotEnoughPermissionsException('Only admins and tokens with sub="my-uni" can export users')
 
 
 @router.get(

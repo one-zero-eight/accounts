@@ -6,6 +6,7 @@ from beanie.odm.operators.update.general import Set
 
 from src.modules.providers.innopolis.schemas import UserInfoFromSSO
 from src.modules.providers.telegram.schemas import TelegramWidgetData
+from src.modules.users.schemas import BulkExportUser
 from src.modules.users.search import norm, norm_tg, rank_users
 from src.storages.mongo.models import User
 
@@ -73,6 +74,32 @@ class UserRepository:
         for user in users:
             result[user["_id"]] = user["telegram"]["id"]
         return result
+
+    async def read_all_for_my_uni_export(self) -> list[BulkExportUser]:
+        users = (
+            await User.get_motor_collection()
+            .aggregate(
+                [
+                    {"$sort": {"_id": 1}},
+                    {
+                        "$project": {
+                            "_id": 0,
+                            "email": {"$ifNull": ["$innopolis_sso.email", None]},
+                            "telegram_id": {"$ifNull": ["$telegram.id", None]},
+                            "telegram_alias": {
+                                "$cond": [
+                                    {"$eq": ["$telegram_update_data.success", True]},
+                                    {"$ifNull": ["$telegram_update_data.username", None]},
+                                    {"$ifNull": ["$telegram.username", None]},
+                                ],
+                            },
+                        },
+                    },
+                ]
+            )
+            .to_list()
+        )
+        return [BulkExportUser.model_validate(user) for user in users]
 
     async def read_by_telegram_id(self, telegram_id: int) -> User | None:
         user = await User.find_one(User.telegram.id == telegram_id)

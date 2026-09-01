@@ -32,6 +32,12 @@ class UserInfo(BaseModel):
     innopolis: InnopolisInfo | None = None
 
 
+class BulkExportUser(BaseModel):
+    email: str | None = None
+    telegram_id: int | None = None
+    telegram_alias: str | None = None
+
+
 class ViewUser(BaseModel):
     model_config = ConfigDict(use_attribute_docstrings=True)
 
