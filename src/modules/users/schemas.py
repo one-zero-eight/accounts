@@ -6,7 +6,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_serializer
 from src.modules.providers.innopolis.schemas import UserInfoFromSSO
 from src.modules.providers.telegram.schemas import TelegramWidgetData
 from src.modules.telegram_update.schemas import TelegramUpdateData
-from src.storages.mongo.models import User
+from src.storages.mongo.models import User, UserPreferences
 
 
 class TelegramInfo(BaseModel):
@@ -38,6 +38,11 @@ class BulkExportUser(BaseModel):
     telegram_alias: str | None = None
 
 
+class UpdateUserPreferences(BaseModel):
+    dorm_building: int | None = None
+    dorm_floor: int | None = None
+
+
 class ViewUser(BaseModel):
     model_config = ConfigDict(use_attribute_docstrings=True)
 
@@ -46,6 +51,7 @@ class ViewUser(BaseModel):
     telegram_info: TelegramInfo | None = None
     telegram_update_data: TelegramUpdateData | None = None
     innohassle_admin: bool = False
+    preferences: UserPreferences = Field(default_factory=UserPreferences)
 
     innopolis_sso: UserInfoFromSSO | None = Field(
         None,
@@ -63,6 +69,10 @@ class ViewUser(BaseModel):
         if value is None:
             return None
         return value.model_dump(exclude={"access_token", "refresh_token"})
+
+    @field_serializer("preferences")
+    def serialize_preferences(self, value: UserPreferences):
+        return value.model_dump(exclude_none=True)
 
 
 def view_from_user(user: User, include_update_data: bool = True, include_deprecated_fields: bool = True) -> "ViewUser":
@@ -105,6 +115,7 @@ def view_from_user(user: User, include_update_data: bool = True, include_depreca
         telegram_info=telegram_info,
         telegram_update_data=user.telegram_update_data if include_update_data else None,
         innohassle_admin=user.innohassle_admin,
+        preferences=user.preferences or UserPreferences(),
         # deprecated fields
         innopolis_sso=user.innopolis_sso if include_deprecated_fields else None,
         telegram=user.telegram if include_deprecated_fields else None,

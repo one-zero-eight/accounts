@@ -13,7 +13,7 @@ from src.api.dependencies import AdminDep, UserIdDep
 from src.exceptions import NotEnoughPermissionsException, ObjectNotFound, UserWithoutSessionException
 from src.modules.tokens.dependencies import UsersAccess, verify_access_token_responses, verify_users_scope_or_admin
 from src.modules.users.repository import user_repository
-from src.modules.users.schemas import BulkExportUser, ViewUser, view_from_user
+from src.modules.users.schemas import BulkExportUser, UpdateUserPreferences, ViewUser, view_from_user
 
 router = APIRouter(prefix="/users", tags=["Users"])
 docs.TAGS_INFO.append({"description": __doc__, "name": str(router.tags[0])})
@@ -32,6 +32,22 @@ async def get_me(user_id: UserIdDep, request: Request) -> ViewUser:
     Get current user info if authenticated
     """
     user = await user_repository.read(user_id)
+    if user is None:
+        # clear session cookie if user is not found
+        request.session.clear()
+        raise UserWithoutSessionException()
+    return view_from_user(user)
+
+
+@router.patch(
+    "/me/preferences",
+    responses={200: {"description": "Updated current user info"}, **UserWithoutSessionException.responses},
+)
+async def update_my_preferences(preferences: UpdateUserPreferences, user_id: UserIdDep, request: Request) -> ViewUser:
+    """
+    Partially update current user's preferences.
+    """
+    user = await user_repository.update_preferences(user_id, preferences.model_dump(exclude_unset=True))
     if user is None:
         # clear session cookie if user is not found
         request.session.clear()

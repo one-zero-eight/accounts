@@ -41,6 +41,26 @@ class UserRepository:
         user = await User.find_one(User.id == user_id)
         return user
 
+    async def update_preferences(self, user_id: PydanticObjectId, preferences: dict[str, int | None]) -> User | None:
+        if not preferences:
+            return await self.read(user_id)
+
+        update: dict[str, dict[str, int | str]] = {}
+        for field, value in preferences.items():
+            path = f"preferences.{field}"
+            if value is None:
+                update.setdefault("$unset", {})[path] = ""
+            else:
+                update.setdefault("$set", {})[path] = value
+
+        collection = User.get_motor_collection()
+        result = await collection.update_one({"_id": user_id}, update)
+        if result.matched_count == 0:
+            return None
+
+        await collection.update_one({"_id": user_id, "preferences": {}}, {"$unset": {"preferences": ""}})
+        return await self.read(user_id)
+
     async def read_bulk(self, user_ids: list[PydanticObjectId]) -> dict[PydanticObjectId, User | None]:
         result = dict.fromkeys(user_ids, None)
         users = await User.find(In(User.id, user_ids)).to_list()

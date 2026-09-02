@@ -42,11 +42,17 @@ class InnopolisInfo(BaseModel):
     updated_at: datetime.datetime
 
 
+class UserPreferences(BaseModel):
+    dorm_building: int | None = None
+    dorm_floor: int | None = None
+
+
 class UserSchema(BaseModel):
     id: str
     innopolis_info: InnopolisInfo
     telegram_info: TelegramInfo | None = None
     innohassle_admin: bool = False
+    preferences: UserPreferences
 
 
 class UserTokenData(BaseModel):
