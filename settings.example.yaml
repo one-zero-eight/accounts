@@ -19,7 +19,7 @@ auth:
     sssssssssss
     -----END PUBLIC KEY-----
 mongo:
-  uri: mongodb://mongoadmin:secret@localhost:27017/db?authSource=admin
+  uri: mongodb://onezeroeight:herewethinkbig@localhost:27017/db?authSource=admin
 telegram: null
 proxy_url: null
 accounts:
