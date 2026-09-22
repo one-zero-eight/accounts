@@ -4,7 +4,7 @@
 # docker compose up --build --wait
 
 services:
-  api:
+  accounts-api:
     build: .
     restart: no
     depends_on:
