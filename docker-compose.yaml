@@ -38,6 +38,7 @@ services:
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME:-onezeroeight}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD:-herewethinkbig}
+      GLIBC_TUNABLES: glibc.pthread.rseq=1
 
 volumes:
   mongodb:
