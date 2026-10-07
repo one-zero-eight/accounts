@@ -3,8 +3,6 @@ import datetime
 from beanie import PydanticObjectId
 from pydantic import BaseModel, ConfigDict, Field, field_serializer
 
-from src.modules.providers.innopolis.schemas import UserInfoFromSSO
-from src.modules.providers.telegram.schemas import TelegramWidgetData
 from src.modules.telegram_update.schemas import TelegramUpdateData
 from src.storages.mongo.models import User, UserPreferences
 
@@ -53,29 +51,12 @@ class ViewUser(BaseModel):
     innohassle_admin: bool = False
     preferences: UserPreferences = Field(default_factory=UserPreferences)
 
-    innopolis_sso: UserInfoFromSSO | None = Field(
-        None,
-        deprecated=True,
-        description="Deprecated field, use `innopolis_info` instead, dont trust data from `innopolis_sso`",
-    )
-    telegram: TelegramWidgetData | None = Field(
-        None,
-        deprecated=True,
-        description="Deprecated field, use `telegram_info` instead",
-    )
-
-    @field_serializer("innopolis_sso")
-    def serialize_innopolis_sso(self, value: UserInfoFromSSO | None):
-        if value is None:
-            return None
-        return value.model_dump(exclude={"access_token", "refresh_token"})
-
     @field_serializer("preferences")
     def serialize_preferences(self, value: UserPreferences):
         return value.model_dump(exclude_none=True)
 
 
-def view_from_user(user: User, include_update_data: bool = True, include_deprecated_fields: bool = True) -> "ViewUser":
+def view_from_user(user: User, include_update_data: bool = True) -> "ViewUser":
     id = user.id
     if user.innopolis_sso:
         innopolis_info = InnopolisInfo(
@@ -116,7 +97,4 @@ def view_from_user(user: User, include_update_data: bool = True, include_depreca
         telegram_update_data=user.telegram_update_data if include_update_data else None,
         innohassle_admin=user.innohassle_admin,
         preferences=user.preferences or UserPreferences(),
-        # deprecated fields
-        innopolis_sso=user.innopolis_sso if include_deprecated_fields else None,
-        telegram=user.telegram if include_deprecated_fields else None,
     )

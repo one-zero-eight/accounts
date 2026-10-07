@@ -112,7 +112,7 @@ async def get_hint_on_type(_: AdminDep, query: str = Query(min_length=3)) -> lis
     """
     users = await user_repository.search_by_query_with_rerank(query, limit=SUGGEST_ON_TYPING_LIMIT)
 
-    return [view_from_user(u, include_update_data=False, include_deprecated_fields=False) for u in users]
+    return [view_from_user(u, include_update_data=False) for u in users]
 
 
 def allowed_user_id_for_jwt_claims(
@@ -230,16 +230,7 @@ async def get_bulk_users_by_innomail(
     user_ids = [user.id for user in users.values() if user is not None]
     if not allowed_user_id_for_jwt_claims(user_ids, access):
         raise NotEnoughPermissionsException("Not enough permissions")
-    return {
-        email: view_from_user(
-            user,
-            include_update_data=False,
-            include_deprecated_fields=False,
-        )
-        if user
-        else None
-        for email, user in users.items()
-    }
+    return {email: view_from_user(user, include_update_data=False) if user else None for email, user in users.items()}
 
 
 @router.get(
