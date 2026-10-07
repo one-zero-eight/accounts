@@ -249,8 +249,7 @@ def check_and_prompt_api_jwt_token():
     import webbrowser
 
     ACCOUNTS_TOKEN_URL = (
-        "https://api.innohassle.ru/accounts/v0/tokens/"
-        "generate-service-token?sub=local-dev&scopes=users&only_for_me=true"
+        "https://api.innohassle.ru/accounts/v0/tokens/generate-service-token?sub=local-dev&scopes=users:me"
     )
     settings = get_settings()
     accounts = settings.get("accounts", {})

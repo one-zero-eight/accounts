@@ -146,10 +146,10 @@ def allowed_user_id_for_jwt_claims(
     },
 )
 async def bulk_export_for_my_uni(access: MyUniOrAdminDep) -> list[BulkExportUser]:
-    if access.is_admin or access.jwt_claims.get("sub") == "my-uni":
+    if access.is_admin or "my-uni" in (access.jwt_claims.get("scope") or "").split():
         return await user_repository.read_all_for_my_uni_export()
 
-    raise NotEnoughPermissionsException('Only admins and tokens with sub="my-uni" can export users')
+    raise NotEnoughPermissionsException('Only admins and tokens with scope="my-uni" can export users')
 
 
 @router.get(

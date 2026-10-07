@@ -14,7 +14,7 @@ from pydantic import BaseModel
 
 from src.api import docs
 from src.api.dependencies import IMPERSONATE_MAX_AGE_SEC, AdminDep, UserDep
-from src.exceptions import InvalidScope, NotEnoughPermissionsException, ObjectNotFound, UserWithoutSessionException
+from src.exceptions import NotEnoughPermissionsException, ObjectNotFound, UserWithoutSessionException
 from src.modules.tokens.dependencies import verify_access_token
 from src.modules.tokens.expiration import ServiceTokenExpiration
 from src.modules.tokens.repository import TokenRepository
@@ -66,6 +66,10 @@ async def generate_my_sport_token(user: UserDep) -> TokenData:
 class AvailableScopes(StrEnum):
     users = "users"
     sport = "sport"
+    parser = "parser"
+    my_uni = "my-uni"
+    users_me = "users:me"
+    sport_me = "sport:me"
 
 
 @router.get(
@@ -85,10 +89,6 @@ async def generate_service_token(
     scopes: list[AvailableScopes] = Query(
         ["users"], description="List of scopes that will be in `scope` field of JWT token. Default is ['users']"
     ),
-    only_for_me: bool = Query(
-        True,
-        description="Generate token only for current user - other users will be marked as not existing in the system",
-    ),
     expiration: ServiceTokenExpiration = Query(
         ServiceTokenExpiration.auto,
         description=(
@@ -102,23 +102,24 @@ async def generate_service_token(
     """
     Generate access token for access users-related endpoints (/users/*).
 
-    By default expires on the nearest 14 August if that is more than a month away,
+    Non-admin users can only request users:me and sport:me scopes.
+    Personal scopes are resolved to the current user's ID in the issued token.
+
+    By default, expires on the nearest 14 August if that is more than a month away,
     otherwise on the next 14 August (so yearly tokens rotate on the same date).
     """
-    _scopes = []
 
-    if not only_for_me and not user.is_admin:
-        raise NotEnoughPermissionsException()
+    if not user.is_admin and any(scope not in {AvailableScopes.users_me, AvailableScopes.sport_me} for scope in scopes):
+        raise NotEnoughPermissionsException(
+            "Only admins can create tokens with scopes other than users:me and sport:me"
+        )
 
-    for scope in scopes:
-        if scope == AvailableScopes.users:
-            _scopes.append(f"users:{user.id}" if only_for_me else "users")
-        elif scope == AvailableScopes.sport:
-            _scopes.append(f"sport:{user.id}" if only_for_me else "sport")
-        else:
-            raise InvalidScope(f"Invalid scope: {scope}")
-
-    token = TokenRepository.create_access_token(sub, _scopes, expiration=expiration)
+    personal_scopes = {
+        AvailableScopes.users_me: f"users:{user.id}",
+        AvailableScopes.sport_me: f"sport:{user.id}",
+    }
+    resolved_scopes = [personal_scopes.get(scope, str(scope)) for scope in scopes]
+    token = TokenRepository.create_access_token(sub, resolved_scopes, expiration=expiration)
     return TokenData(access_token=token)
 
 
