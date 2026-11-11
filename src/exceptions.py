@@ -84,3 +84,17 @@ class ObjectNotFound(HTTPException):
         )
 
     responses = {404: {"description": "Object with such properties not found"}}
+
+
+class InvalidTransferToken(HTTPException):
+    """
+    HTTP_401_UNAUTHORIZED
+    """
+
+    def __init__(self) -> None:
+        super().__init__(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=self.responses[401]["description"],
+        )
+
+    responses = {401: {"description": "Transfer token is invalid or expired"}}

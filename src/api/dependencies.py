@@ -1,4 +1,4 @@
-__all__ = ["UserIdDep", "OptionalUserIdDep", "UserDep", "AdminDep"]
+__all__ = ["UserIdDep", "OptionalUserIdDep", "UserDep", "AdminDep", "is_impersonating"]
 
 import time
 from typing import Annotated
@@ -20,10 +20,14 @@ async def _get_uid_from_session(request: Request) -> PydanticObjectId:
     return uid
 
 
-async def _get_optional_uid_from_session(request: Request) -> PydanticObjectId | None:
-    impersonate_uid = request.session.get("impersonate_uid")
+def is_impersonating(request: Request) -> bool:
     impersonate_until = request.session.get("impersonate_until")
-    if impersonate_uid and impersonate_until and time.time() < impersonate_until:
+    return bool(request.session.get("impersonate_uid") and impersonate_until and time.time() < impersonate_until)
+
+
+async def _get_optional_uid_from_session(request: Request) -> PydanticObjectId | None:
+    if is_impersonating(request):
+        impersonate_uid = request.session.get("impersonate_uid")
         try:
             uid = PydanticObjectId(impersonate_uid)
             if await user_repository.exists(uid):

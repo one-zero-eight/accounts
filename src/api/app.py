@@ -3,11 +3,11 @@ __all__ = ["app"]
 from fastapi import FastAPI
 from fastapi_swagger import patch_fastapi
 from starlette.middleware.cors import CORSMiddleware
-from starlette.middleware.sessions import SessionMiddleware
 
 import src.logging_  # noqa: F401
 from src.api import docs
 from src.api.lifespan import lifespan
+from src.api.session import MirrorAwareSessionMiddleware
 from src.config import settings
 from src.config_schema import Environment
 
@@ -42,7 +42,7 @@ app.add_middleware(
 same_site = "lax" if settings.environment == Environment.PRODUCTION else "none"
 session_cookie = "__Secure-accounts-session" if settings.environment == Environment.PRODUCTION else "accounts-session"
 app.add_middleware(
-    SessionMiddleware,
+    MirrorAwareSessionMiddleware,
     secret_key=settings.auth.session_secret_key.get_secret_value(),
     session_cookie=session_cookie,
     max_age=14 * 24 * 60 * 60,  # 14 days, in seconds
@@ -55,11 +55,13 @@ app.add_middleware(
 from src.modules.users.routes import router as router_users  # noqa: E402, I001
 from src.modules.providers.routes import router as router_providers  # noqa: E402, I001
 from src.modules.logout import router as router_logout  # noqa: E402, I001
+from src.modules.mirror_session import router as router_mirror_session  # noqa: E402, I001
 from src.modules.tokens.routes import router as router_tokens  # noqa: E402, I001
 from src.modules.rooms.routes import router as router_rooms  # noqa: E402, I001
 
 app.include_router(router_users)
 app.include_router(router_providers)
 app.include_router(router_logout)
+app.include_router(router_mirror_session)
 app.include_router(router_tokens)
 app.include_router(router_rooms)
