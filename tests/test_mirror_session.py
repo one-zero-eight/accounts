@@ -66,9 +66,14 @@ def app(monkeypatch, signing_key, user):
     return application
 
 
-def make_client(app):
+FRONTEND_ORIGIN = "https://innohassle.ru"
+
+
+def make_client(app, origin: str | None = FRONTEND_ORIGIN):
     # The same app answers on both hosts: only the cookies of each client tell them apart.
-    return AsyncClient(transport=ASGITransport(app=app), base_url="https://accounts.test")
+    # Requests come from the frontend, so they carry its Origin like in a browser.
+    headers = {"origin": origin} if origin is not None else {}
+    return AsyncClient(transport=ASGITransport(app=app), base_url="https://accounts.test", headers=headers)
 
 
 async def sign_in(client: AsyncClient) -> None:
@@ -131,6 +136,19 @@ async def test_session_of_the_main_host_is_not_replaced_by_a_mirror_one(app, use
         )
         assert response.status_code == 204
         assert (await main.get("/me")).text == f"{user.id} False"
+
+
+@pytest.mark.parametrize("origin", [None, "https://evil.example", "https://innohassle.ru.evil.example"])
+async def test_mirror_session_is_not_set_from_a_disallowed_origin(app, user, origin):
+    async with make_client(app) as main, make_client(app, origin=origin) as cross_site:
+        await sign_in(main)
+        response = await cross_site.post(
+            "/session/mirror",
+            json={"transfer_token": await transfer_token(main)},
+        )
+        assert response.status_code == 403
+        assert "set-cookie" not in response.headers
+        assert (await cross_site.get("/me")).text == "None False"
 
 
 async def test_transfer_token_is_rejected_while_impersonating(app):

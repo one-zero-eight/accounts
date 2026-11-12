@@ -4,6 +4,8 @@ The browser does not send the session cookie of the main host to the mirror, so 
 (a JWT that expires in 1 minute) from the main host and exchanges it here for the mirror's own session cookie.
 """
 
+import re
+
 from beanie import PydanticObjectId
 from fastapi import APIRouter, Request
 from pydantic import BaseModel
@@ -11,6 +13,7 @@ from pydantic import BaseModel
 from src.api import docs
 from src.api.dependencies import UserDep, is_impersonating
 from src.api.session import MIRROR_SESSION_KEY
+from src.config import settings
 from src.exceptions import InvalidTransferToken, NotEnoughPermissionsException, UserWithoutSessionException
 from src.modules.tokens.repository import TokenRepository
 from src.modules.users.repository import user_repository
@@ -43,7 +46,11 @@ async def create_transfer_token(user: UserDep, request: Request) -> TransferToke
 
 @router.post(
     "",
-    responses={204: {"description": "Mirror session is set"}, **InvalidTransferToken.responses},
+    responses={
+        204: {"description": "Mirror session is set"},
+        **InvalidTransferToken.responses,
+        **NotEnoughPermissionsException.responses,
+    },
     status_code=204,
 )
 async def set_mirror_session(data: TransferTokenData, request: Request):
@@ -51,6 +58,11 @@ async def set_mirror_session(data: TransferTokenData, request: Request):
     Exchange a transfer token for the session cookie. Call it through the mirror host.
     A session of the main host is kept untouched.
     """
+    # Prevent CSRF, any site could sign in with the attacker's token. Browsers always send Origin with such a POST.
+    origin = request.headers.get("origin")
+    if origin is None or not re.fullmatch(settings.cors_allow_origins_regex, origin):
+        raise NotEnoughPermissionsException("Origin is not allowed")
+
     uid = TokenRepository.verify_mirror_transfer_token(data.transfer_token)
     if uid is None or not await user_repository.exists(PydanticObjectId(uid)):
         raise InvalidTransferToken()
